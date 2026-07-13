@@ -34,3 +34,11 @@ Thumbs.db
 # copilot 基准评测的 runs/ 是小型可复现证据（220K），**有意提交**以支持开源复现；
 # 大型训练产物已在上方 outputs/copilot_3b_lora*/ 排除。
 .workbuddy/
+
+# ===== Discipline-checker byproducts (validate_release.py / verify_copilot_run.py) =====
+# 不提交:每次跑 verify 都会重生成的 _verify_summary.json / _verify_report.jsonl /
+# _verify_scores.json,跟 committed summary.json / report.jsonl 内容重复且会误导读者。
+_verify_*.json
+_verify_*.jsonl
+**/_verify_*.json
+**/_verify_*.jsonl
