@@ -1,0 +1,58 @@
+{
+  "version": "1.0.0",
+  "description": "Entry-point CLI contracts for the auditable-llm-eval pipeline",
+  "stable_since": "2026-07-13",
+  "entries": [
+    {
+      "name": "eval/run_copilot_eval.py",
+      "purpose": "One-shot reproducible eval: run model on test_50, write outputs/verdicts/report/summary/config to runs/<run_id>/",
+      "args": [
+        {"flag": "--model", "required": true, "type": "string", "help": "ollama model tag (e.g. copilot-3b-lora-v3c:latest, qwen2.5:3b)"},
+        {"flag": "--dataset", "required": false, "type": "path", "default": "outputs/llm-lab/datasets/llm_lab_copilot/test_50.jsonl", "help": "test jsonl path"},
+        {"flag": "--scorer", "required": false, "type": "path", "default": "copilot/score_copilot_run_v2.py", "help": "scorer script"},
+        {"flag": "--ollama-url", "required": false, "type": "string", "default": "http://localhost:11434", "help": "ollama REST endpoint"},
+        {"flag": "--runs-dir", "required": false, "type": "path", "default": "outputs/llm-lab/datasets/llm_lab_copilot/runs", "help": "parent dir for new run_id"}
+      ],
+      "outputs": {
+        "outputs.jsonl": "model outputs, one row per test item (id, output, error?, latency)",
+        "verdicts.jsonl": "naive structural verdicts (non-empty + min-length guard). NOT authoritative — see summary.json for real score.",
+        "report.jsonl": "scorer per-row result: exact_checks, soft_checks, unsupported_claims, missing_required_points, score, runtime_error",
+        "summary.json": "aggregated: total, semantic_scored, runtime_errors, overall_reference_check_rate, by_task, items_with_unsupported_claims",
+        "config.yaml": "pinned run config (model tag, dataset path, scorer path, temperature=0, seed, timestamp) — for re-running"
+      },
+      "stdout_last_line": "summary.json content (single JSON object, machine-readable)",
+      "exit_codes": {"0": "ok", "1": "verdict anomaly (some item missing output)"}
+    },
+    {
+      "name": "verify_copilot_run.py",
+      "purpose": "Discipline checker: re-run scorer from disk against a committed run, verify outputs/verdicts/summary/tamper-audit/config",
+      "args": [
+        {"flag": "--run-dir", "required": true, "type": "path", "help": "path to a committed run (must contain outputs.jsonl, verdicts.jsonl, summary.json, config.yaml)"},
+        {"flag": "--dataset", "required": true, "type": "path", "help": "test_50.jsonl path"},
+        {"flag": "--scorer", "required": true, "type": "path", "help": "scorer script"},
+        {"flag": "--model-expected", "required": false, "type": "string", "help": "expected model tag (for tamper audit on config.yaml)"}
+      ],
+      "checks": [
+        "outputs.jsonl exists & all rows have non-empty output text",
+        "verdicts.jsonl row count matches outputs.jsonl",
+        "scorer re-run reproduces summary.json (overall_reference_check_rate + by_task + runtime_errors)",
+        "tamper audit: report.jsonl rows contain checks matching dataset reference_checks (no silent check removal)",
+        "config.yaml matches expected model tag (no model swap)"
+      ],
+      "stdout_final_line": "ALL CHECKS PASSED: <summary_reproduced>",
+      "exit_codes": {"0": "all checks PASS", "1": "any check FAIL"}
+    },
+    {
+      "name": "copilot/score_copilot_run_v2.py",
+      "purpose": "Authoritative scorer with 10 reference_check types (see specs/scoring-rules.json)",
+      "args": [
+        {"flag": "--tests", "required": "unless --selftest", "type": "path"},
+        {"flag": "--predictions", "required": "unless --selftest", "type": "path"},
+        {"flag": "--out", "required": false, "type": "path", "help": "per-row report jsonl"},
+        {"flag": "--summary", "required": false, "type": "path", "help": "summary json (single object)"},
+        {"flag": "--selftest", "action": "store_true", "help": "run 3-case internal self-test (no real repo needed)"}
+      ]
+    }
+  ],
+  "dependency_policy": "all three scripts depend ONLY on Python standard library (no pip install needed for eval pipeline)"
+}

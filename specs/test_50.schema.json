@@ -1,0 +1,54 @@
+{
+  "version": "1.0.0",
+  "description": "JSON Schema for the copilot benchmark test set (one JSON object per line)",
+  "stable_since": "2026-07-13",
+  "file_format": "jsonl (one JSON object per line, UTF-8, no BOM)",
+  "item": {
+    "type": "object",
+    "required": ["id", "task", "prompt", "reference_checks"],
+    "additionalProperties": false,
+    "properties": {
+      "id": {
+        "type": "string",
+        "pattern": "^c[0-9]{3}$",
+        "description": "Stable identifier. Format cNNN. Loader matches predictions by this id."
+      },
+      "task": {
+        "type": "string",
+        "enum": ["eval_yaml", "failure_diagnosis", "report_summary", "reviewer_qa", "verifier_design"],
+        "description": "Task type — drives scoring groups in by_task summary."
+      },
+      "prompt": {
+        "type": "string",
+        "minLength": 10,
+        "description": "The actual prompt sent to the model. Chinese prompt expected."
+      },
+      "reference_checks": {
+        "type": "array",
+        "minItems": 1,
+        "items": {
+          "type": "object",
+          "required": ["type"],
+          "properties": {
+            "type": {"type": "string", "enum": ["must_include_any_keywords", "must_include_all_keywords", "must_answer_no", "must_explain_surface_constraints", "must_recommend_manual_or_semantic_eval", "must_mention_rerun_or_reproducibility", "must_not_claim_tamper_proof", "must_distinguish_provider_error", "must_not_judge_semantic_quality", "must_check_reason_and_action"]},
+            "value": {"type": "array", "items": {"type": "string"}, "description": "Required for must_include_*; ignored otherwise."}
+          }
+        },
+        "description": "Programmatic checks against model output. See specs/scoring-rules.json for full semantics."
+      }
+    }
+  },
+  "current_release": {
+    "path": "outputs/llm-lab/datasets/llm_lab_copilot/test_50.jsonl",
+    "size": 50,
+    "task_distribution": {
+      "eval_yaml": "c001-c010",
+      "report_summary": "c011-c020",
+      "failure_diagnosis": "c021-c030",
+      "verifier_design": "c031-c040",
+      "reviewer_qa": "c041-c050"
+    }
+  },
+  "loader_tolerance": "scorer accepts aliases: 'task' -> 'type', 'value' -> 'keywords' -> 'args' (in that order). See score_one().",
+  "evolution_note": "Earlier draft docs mentioned task names 'claim_check' and 'keyword_audit' (pre-test_50 design); the actual released test_50 uses the 5 task names above. This spec is the source of truth."
+}
