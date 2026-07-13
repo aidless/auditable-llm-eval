@@ -1,5 +1,12 @@
 # Qwen2.5-3B TMLR 领域专家微调工程（RTX 3060 6GB 专用）
 
+[![release-validate](https://github.com/aidless/auditable-llm-eval/actions/workflows/release.yml/badge.svg)](https://github.com/aidless/auditable-llm-eval/actions/workflows/release.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+[![Python ≥ 3.10](https://img.shields.io/badge/python-≥3.10-blue.svg)]()
+[![No GPU for CI](https://img.shields.io/badge/CI-no%20GPU%20needed-success.svg)](./.github/workflows/README.md)
+
+> **TL;DR.** This repo is an auditable LLM evaluation pipeline (10 programmatic `reference_checks`, including *cognitive-honesty* dimensions) that catches false-green verdicts. Two committed runs reproduce in one command: naive verdicts **100% green**, authoritative scorer **69.00%** and **67.00%** — a 30-point deception zone, falsifiable by any reader. Full story: [docs/blog/001](./outputs/llm-lab/docs/blog/001-auditable-llm-eval-no-green-lights.md). 中文小白指南: [docs/GETTING_STARTED.md](./outputs/llm-lab/docs/GETTING_STARTED.md).
+
 在 **RTX 3060 6GB**（Ampere / CUDA 12.x / Windows）上，用 **LoRA + 4bit 量化（QLoRA）** 把 `Qwen/Qwen2.5-3B-Instruct` 微调成 **TMLR 机器学习领域专家** 的完整可运行工程，并支持可选的 **"审稿偏好"第二轮 LoRA**（路径 B）。
 
 全流程分四阶段，由 `run_all.py` 一键编排：

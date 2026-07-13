@@ -2,7 +2,7 @@
 
 > Each numbered file in this directory is a **traceable analysis** — what was the trigger, what was wrong, what was the fix, what was the lesson. Read in order to reconstruct how this repo got from idea to current state.
 
-This follows the **留痕可审计** principle from the [V1 workspace constitution](https://example.com) (also used by the Taixuan WeChat Mini-Program project): every decision worth making is worth recording.
+This follows a **留痕可审计 (auditable trace)** discipline (the same pattern used by sibling projects where every decision worth making is worth recording). For the falsifiable exhibit, see [`004-false-green-evidence.md`](./004-false-green-evidence.md) — the chain that motivates writing these.
 
 ---
 

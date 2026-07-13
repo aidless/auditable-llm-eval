@@ -2,7 +2,7 @@
 
 > Each JSON in this directory is a **machine-checkable contract**. Each is paired with usage notes (this README). Together they are the source of truth for what the eval pipeline **must** do.
 
-This follows the **Spec-First** pattern from the [V1 workspace constitution](https://example.com) (also used by the Taixuan WeChat Mini-Program project): contracts before code, JSON for machines, Markdown for humans.
+This follows a **Spec-First** discipline (the same pattern used by sibling projects where contracts precede code, JSON serves machines, Markdown serves humans). For the falsifiable chain that motivates this layer, see [`analysis/004-false-green-evidence.md`](../analysis/004-false-green-evidence.md).
 
 ---
 
@@ -16,7 +16,7 @@ This follows the **Spec-First** pattern from the [V1 workspace constitution](htt
 
 ---
 
-## 🛡️ Maintenance Rules (borrowed from the V1 constitution)
+## 🛡️ Maintenance Rules
 
 1. **Spec changes precede code changes.** When you change a check semantics, update `scoring-rules.json` **first**, then change `score_copilot_run_v2.py` to match.
 2. **A spec without code is a bug.** If `scoring-rules.json` lists 10 check types but `DISPATCH` only has 8, that's a P0 inconsistency.
