@@ -1,0 +1,28 @@
+# Windows + RTX 3060 (Ampere, CUDA 12.x) 训练环境依赖
+# 用法:  pip install -r requirements_win3060.txt
+#
+# 重要: unsloth 自带兼容的 CUDA 12.1 torch，请勿在装它之前单独先装 torch，
+#       否则易出现 torch/CUDA 版本错配。先装本文件，unsloth 会拉入正确 torch。
+#       需要 Python 3.10–3.12（3.13 部分二进制尚不全，建议 3.11/3.12）。
+
+# 1) 核心训练栈：4bit 量化 + LoRA 注入（含 fast language model / SFTTrainer 胶水）
+unsloth[windows-torch230] @ git+https://github.com/unslothai/unsloth.git
+
+# 2) 训练框架与工具
+trl>=0.9
+transformers>=4.45
+datasets
+accelerate
+bitsandbytes-windows
+peft
+sentencepiece
+numpy<2
+
+# 3) 数据构建（arXiv 抓取）
+#    脚本已兼容 arxiv 1.4.2 与 4.x；但实测 1.4.2 的查询端点用 http://，
+#    arXiv 现对该端点返回 HTTP 301 强制 https，旧客户端不跟随重定向 → 抓取直接失败。
+#    故锁 4.0.0（走 https，HTTP 200，可正常抓取）；代码已处理 4.x 的 API 变更
+#    （client.results(search) 必传、源码端点 /e-print 返回 PDF 优雅降级等）。
+#    注意: arXiv 服务端已对 /e-print/ 与 /src/ 返回 PDF，正文级 live 抓取会降级为摘要；
+#         真正正文级请用 --from-dir 传入手动下载的源码包（详见 SKILL.md / playbook §6）。
+arxiv==4.0.0

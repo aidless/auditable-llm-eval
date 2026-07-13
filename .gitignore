@@ -1,0 +1,36 @@
+# ===== Model weights / merged checkpoints (large, usually git-lfs or excluded) =====
+outputs/copilot_3b_lora*/
+outputs/*-merged/
+*.safetensors
+*.gguf
+*.ckpt
+*.bin
+*.pt
+*.pth
+*.onnx
+
+# ===== Training / eval data (large or copyright — e.g. arXiv abstracts) =====
+train_seed_200*.jsonl
+data/*.jsonl
+eval/eval_questions.jsonl
+
+# ===== Python / tooling caches =====
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+.idea/
+.vscode/
+.ipynb_checkpoints/
+
+# ===== OS / editor =====
+Thumbs.db
+.DS_Store
+
+# ===== Local deploy / scratch =====
+*.log
+*.zip
+# copilot 基准评测的 runs/ 是小型可复现证据（220K），**有意提交**以支持开源复现；
+# 大型训练产物已在上方 outputs/copilot_3b_lora*/ 排除。
+.workbuddy/

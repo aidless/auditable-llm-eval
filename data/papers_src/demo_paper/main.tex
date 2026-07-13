@@ -1,0 +1,13 @@
+\title{Demo: A Manifold-Constrained Method}
+\begin{abstract}
+We propose a method with strong empirical results.
+\end{abstract}
+\section{Method}
+We minimize the loss $L(\theta) = \frac{1}{n}\sum_i \ell(f_\theta(x_i), y_i)$.
+The gradient is given by
+\begin{equation}
+\nabla_\theta L = \frac{1}{n}\sum_i \nabla_\theta \ell(f_\theta(x_i), y_i)
+\end{equation}
+We apply Sinkhorn-Knopp to project $B$ onto the Birkhoff polytope.
+\section{Experiment}
+We compare against strong baselines on three benchmarks.

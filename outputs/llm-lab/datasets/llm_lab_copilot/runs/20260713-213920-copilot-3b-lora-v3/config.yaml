@@ -1,0 +1,4 @@
+model: copilot-3b-lora-v3:latest
+temperature: 0.0
+num_predict: 400
+verdict_policy: live-nonempty-only
