@@ -11,6 +11,16 @@ Runs [`scripts/validate_release.py`](../../scripts/validate_release.py) on every
 3. **verifier on every committed run** (`verify_copilot_run.py` × N runs)
 4. **gitignore sanity** (no `.zip` / no weights / no `.workbuddy/` in tracked tree)
 
+### Why no `cache: pip` (history: removed 2026-07-13 after first two CI runs went red)
+
+The first version of this workflow **did** include `cache: pip` + `cache-dependency-path: requirements*.txt`. Both CI runs under that version failed with exit 1 after 8-10 seconds.
+
+Root cause: `actions/setup-python@v5` with `cache: pip` enabled tries to hash the dependency files for the cache key. The repo only has `requirements_win3060.txt` (CUDA-on-Windows pip names) — it has no `setup.py` / `pyproject.toml` / PyPI-mappable package list. `setup-python` couldn't compute the cache hash, exited non-zero in the setup phase, before any of our scripts ran.
+
+**Fix**: removed `cache: pip` entirely. The pipeline is **stdlib-only** (no third-party imports anywhere in `scripts/`, `copilot/`, `verify_copilot_run.py`, or `eval/`), so there's nothing to cache. See [`analysis/007-ci-v2-fix.md`](../../analysis/007-ci-v2-fix.md) for the full incident writeup.
+
+The badge on the main README may still show red from the first two failing runs; it will turn green after the next push (the broken HEAD was the second-to-last commit; the fix lands on the next push).
+
 ### Why no Ollama / GPU dependency
 
 Check #3 runs the scorer against **committed `outputs.jsonl`**, not against the live model. So GitHub-hosted `ubuntu-latest` runners (no GPU) can verify the headline numbers without spinning up an Ollama server. Anyone can re-derive the result in a CI sandbox.

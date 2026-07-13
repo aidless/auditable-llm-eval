@@ -27,17 +27,19 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
+          # No `cache: pip` — this repo's eval pipeline uses ONLY Python stdlib
+          # (`scripts/validate_release.py` + `copilot/score_copilot_run_v2.py` +
+          # `verify_copilot_run.py`). Adding pip cache was a real failure mode:
+          # `setup-python@v5` would attempt to hash requirements*.txt, fail on
+          # requirements_win3060.txt (which only has windowed-CUDA names with
+          # no PyPI mapping), and exit 1 within 8 seconds. See analysis/007.
           python-version: "3.11"
-          cache: pip
-          cache-dependency-path: |
-            requirements*.txt
+          check-latest: false
 
       - name: Show environment
         run: |
           python --version
           git --version
-          echo "tracked files: $(git ls-files | wc -l)"
-          echo "OS: ${{ runner.os }}"
 
       - name: Run reproducible-release validation
         # This is the same single command a contributor runs locally before opening a PR.
