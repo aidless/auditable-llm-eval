@@ -59,13 +59,15 @@ This proves:
 
 **PASS, exit 0, ~30 seconds wall time.**
 
-Why this is now a high-confidence prediction (upgraded from `analysis/006`'s claim, which was invalidated by the actual incident):
+Why this is a **moderate-confidence** prediction (deliberately downgraded from `analysis/006`'s "high confidence" claim, which was invalidated by the actual incident):
 
 - ✅ YAML structure is sane
 - ✅ Python 3.11 compatibility verified locally
 - ✅ Fresh-clone + 3.11 = PASS verified locally
 - ✅ The fix removed the cache config that was the **only identified failure mode** for the previous red runs
-- ❌ The remaining unverified surface is the GitHub Actions runner itself — and it has been running thousands of similar workflows daily across millions of repos without action setup failures on the simplified config
+- ❌ The remaining unverified surface is the GitHub Actions runner itself — and we cannot verify locally that `actions/setup-python@v5` + `actions/checkout@v4` + `ubuntu-latest` together succeed under the simplified `with:` block
+
+Moderate, not high, because the same optimism that bit `analysis/006` should not reassert itself just because we added one more verification dimension. Two known-unknowns remain: the actual GitHub Actions runner behavior, and the OS-level differences between Windows + Python 3.11 (what we tested) vs Linux + Python 3.11 (what CI uses).
 
 ## What to do if it still goes red
 
