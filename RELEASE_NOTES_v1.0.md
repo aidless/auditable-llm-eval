@@ -90,3 +90,72 @@ MIT — see `LICENSE`. (Copyright: aidless.)
 - Repo: https://github.com/aidless/auditable-llm-eval
 - Beginner guide: `docs/GETTING_STARTED.md`
 - Full story: `docs/blog/001-auditable-llm-eval-no-green-lights.md`
+
+---
+
+## 🧱 Post-1.0 Audit Layers (added 2026-07-13, no headline-number change)
+
+> These layers do not change any committed score. They make the existing scores **more auditable, more reproducible, more contributor-friendly**.
+
+After tagging v1.0.0, four structural additions landed (still in tag `v1.0.0` HEAD, not a new version — they're hygiene, not science):
+
+### 1. Contract layer — `specs/`
+
+Three machine-checkable JSON contracts paired with a `README.md` containing a one-line consistency check:
+
+| File | Purpose | Pair |
+|---|---|---|
+| `specs/scoring-rules.json` | 10 `reference_check` types + runtime/overclaim detection | `copilot/score_copilot_run_v2.py` |
+| `specs/eval.endpoints.json` | CLI contract for the three eval scripts | `eval/run_copilot_eval.py` · `verify_copilot_run.py` · `copilot/score_copilot_run_v2.py` |
+| `specs/test_50.schema.json` | JSON Schema for `test_50.jsonl` (pins 5 task types) | `outputs/.../test_50.jsonl` |
+
+**Why**: a contract change forces a scorer change (and vice versa). Drift in either direction is now detectable with a one-line Python check.
+
+### 2. Decision log — `analysis/`
+
+Four numbered analyses, each with `Trigger / Problem / Diagnosis / Fix / Verification / Lesson / Links`:
+
+- `analysis/001-scorer-runtime-misclassification-fix.md` — why v3c jumped from 63.95% to 69.00% (length-guard + harness-error trust)
+- `analysis/002-verify-data-model-rewrite.md` — why the verifier false-FAIL'd at first, and how the rewrite aligns with actual scorer output shape
+- `analysis/003-honesty-pass.md` — how the headline 7.59%/77.69% got downgraded to reality 67%/69%
+- `analysis/004-false-green-evidence.md` — the reproducible exhibit for the false-green thesis
+
+**Why**: future contributors (including future-you) need to read why, not just what.
+
+### 3. Standardized contribution surface
+
+- `CHANGELOG.md` — SemVer timeline + source-doc appendix (root-level planning docs preserved for context)
+- `CONTRIBUTING.md` — how to add a new run / new check / new task, plus a 3-gate local validation policy
+- `scripts/validate_release.py` — one-shot local validator (mirrored from the user-level `reproducible-publish` skill)
+
+### 4. CI that enforces the discipline
+
+`.github/workflows/release.yml` runs `validate_release.py` on every push and PR:
+
+- ⚡ ubuntu-latest, Python 3.11, ~30 s
+- 🎯 **No Ollama / no GPU required** — the verifier re-runs the scorer against committed `outputs.jsonl`, never against the live model
+- 🚪 Fails the push if any of the 4 checks fails
+
+**Status badge** (add to README):
+```markdown
+[![release-validate](https://github.com/aidless/auditable-llm-eval/actions/workflows/release.yml/badge.svg)](https://github.com/aidless/auditable-llm-eval/actions/workflows/release.yml)
+```
+
+---
+
+## ✅ Reproducibility self-check (re-run this any time)
+
+```bash
+# 1) install nothing — Python stdlib only for the core scripts
+python scripts/validate_release.py
+# OVERALL: PASS  ← if you see this, the release is honest
+
+# 2) fresh-clone dry run (gold standard)
+cd /tmp && rm -rf clone_test
+git clone https://github.com/aidless/auditable-llm-eval.git clone_test
+cd clone_test
+python scripts/validate_release.py
+# OVERALL: PASS  ← if you see this too, the headline numbers truly trust no-one-but-the-clone
+```
+
+If step 1 passes but step 2 fails, the release is broken — file an issue with the failing step's tail output.

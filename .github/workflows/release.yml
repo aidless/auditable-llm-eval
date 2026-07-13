@@ -1,0 +1,55 @@
+name: release-validate
+
+# Validates every push and PR against the reproducible-release discipline
+# codified in scripts/validate_release.py (selftest + spec↔code + verifier × every
+# committed run + gitignore sanity). Exits non-zero on any failure.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: validate-release
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: |
+            requirements*.txt
+
+      - name: Show environment
+        run: |
+          python --version
+          git --version
+          echo "tracked files: $(git ls-files | wc -l)"
+          echo "OS: ${{ runner.os }}"
+
+      - name: Run reproducible-release validation
+        # This is the same single command a contributor runs locally before opening a PR.
+        # No Ollama / GPU / external service required: the verifier re-runs the scorer
+        # against committed outputs.jsonl, never against the model.
+        run: |
+          python scripts/validate_release.py
+
+      - name: Print final report
+        if: always()
+        run: |
+          echo "----"
+          echo "release-validate run finished with exit status ${{ job.status }}"
+          echo "See the 'Run reproducible-release validation' step above for details."
+          echo "If this failed, the PR / push cannot ship until validate_release.py exits 0."
