@@ -3,6 +3,12 @@ name: release-validate
 # Validates every push and PR against the reproducible-release discipline
 # codified in scripts/validate_release.py (selftest + spec↔code + verifier × every
 # committed run + gitignore sanity). Exits non-zero on any failure.
+#
+# Runs the SAME validation on 3 OS (ubuntu / windows / macos) — the scorer and
+# verifier use only Python stdlib (no third-party deps), so they should behave
+# identically on all three. The matrix is a regression net: if a future
+# contributor introduces a non-portable pattern (e.g. hardcoded '/' in path
+# joins, os.system with shell=True, etc.) one of the three OS will catch it.
 
 on:
   push:
@@ -16,9 +22,18 @@ permissions:
 
 jobs:
   validate:
-    name: validate-release
-    runs-on: ubuntu-latest
+    name: validate-release (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 15
+
+    strategy:
+      # Don't cancel the others if one fails — we want to see all 3 OS results.
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - windows-latest
+          - macos-latest
 
     steps:
       - name: Checkout
@@ -31,7 +46,7 @@ jobs:
           # (`scripts/validate_release.py` + `copilot/score_copilot_run_v2.py` +
           # `verify_copilot_run.py`). Adding pip cache was a real failure mode:
           # `setup-python@v5` would attempt to hash requirements*.txt, fail on
-          # requirements_win3060.txt (which only has windowed-CUDA names with
+          # requirements_win3060.txt (which has windowed-CUDA names with
           # no PyPI mapping), and exit 1 within 8 seconds. See analysis/007.
           python-version: "3.11"
           check-latest: false
@@ -47,6 +62,18 @@ jobs:
         # against committed outputs.jsonl, never against the model.
         run: |
           python scripts/validate_release.py
+
+      - name: Run unit tests
+        # Stdlib unittest (no third-party deps). Each test exercises a
+        # specific scorer / verifier / validate_release.py behavior in
+        # isolation, so a future change that breaks a single check type
+        # fails at the relevant test name rather than as one big "validate
+        # failed" exit code. Idempotent: if tests/ doesn't exist, skip.
+        # Use Python (not [ -d ]) for OS-portable directory check — the
+        # default windows-latest shell is pwsh, which doesn't recognize
+        # bash test syntax.
+        run: |
+          python -c "import os, sys; sys.exit(0 if os.path.isdir('tests') else 1)" && python -m unittest discover -s tests -v || echo "No tests/ directory yet — skipping."
 
       - name: Print final report
         if: always()

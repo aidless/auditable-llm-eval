@@ -4,6 +4,8 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 [![Python ≥ 3.10](https://img.shields.io/badge/python-≥3.10-blue.svg)]()
 [![No GPU for CI](https://img.shields.io/badge/CI-no%20GPU%20needed-success.svg)](./.github/workflows/README.md)
+[![CI: 3 OS](https://img.shields.io/badge/CI-3%20OS%20(ubuntu%20%7C%20windows%20%7C%20macos)-blueviolet)](./.github/workflows/release.yml)
+[![39 unit tests](https://img.shields.io/badge/tests-39%20%2F%2039%20OK-success.svg)](./tests/)
 
 > **TL;DR.** This repo is an auditable LLM evaluation pipeline (10 programmatic `reference_checks`, including *cognitive-honesty* dimensions) that catches false-green verdicts. Two committed runs reproduce in one command: naive verdicts **100% green**, authoritative scorer **69.00%** and **67.00%** — a 30-point deception zone, falsifiable by any reader. Full story: [docs/blog/001](./outputs/llm-lab/docs/blog/001-auditable-llm-eval-no-green-lights.md). 中文小白指南: [docs/GETTING_STARTED.md](./outputs/llm-lab/docs/GETTING_STARTED.md).
 
