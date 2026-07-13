@@ -130,6 +130,45 @@ All three must say `PASS`. If any says `FAIL` / `DRIFT`, your PR isn't ready.
 
 ---
 
+## 📐 Confidence-phrasing rules (the only project-wide writing rule)
+
+This repo has a permanent rule about how to write confidence claims. It exists because the project got bitten by it once and we don't want to get bitten again.
+
+**The rule:** phrases like "high confidence", "almost certainly", "definitely", "clearly", "obviously" are **phrasing-class failure modes** — independent of model or method, they invite overclaiming. Each gets demoted once bitten, and a single new verification dimension does **not** upgrade them back.
+
+### Confidence ladder (use this when you write any conclusion)
+
+| Confidence level | Required evidence | Example phrasing |
+|---|---|---|
+| **Confirmed** | Real measurement **+** peer review **+** multiple independent verifications | "Confirmed", "established", "verified by N independent runs" |
+| **Moderate** | Real measurement **+** single-dimension local verification **+** inferred extrapolation | "Moderate confidence", "predicted", "with the caveat that …" |
+| **Speculative** | Inference only, no measurement | "May", "possibly", "likely cause" |
+| **Unverifiable** | Requires external access (CI, real-world deploy, peer review) | "Unverified locally; the following dimensions cannot be tested: …" |
+
+### The one-line test
+
+Before writing any confidence claim, ask:
+
+> "If this turns out wrong, how embarrassing would it be?"
+
+If the answer is "very", you do not have enough verification dimensions — drop the confidence level.
+
+### Why this rule is in the contributor guide, not just personal memory
+
+The repo's first CI simulation report (`analysis/006`, "predicted PASS, high confidence") was bitten by reality within hours. A follow-up (`analysis/008`) repeated the same "high confidence" phrasing despite adding one more verification dimension. The second phrasing was downgraded to "moderate confidence" only because a self-review caught it.
+
+Future contributors — including future-us — will be tempted to write "high confidence" the moment a local test passes. **This rule is the guardrail.** It's a self-discipline rule, not a CI-enforced rule, so it lives here in prose rather than in `validate_release.py`. But a reviewer may still flag a PR that uses "high confidence" without strong evidence.
+
+### Real example from this repo's history
+
+> ❌ `analysis/006` (deleted from index, but archived in git history): "predicted GitHub Actions outcome on this HEAD: PASS (high confidence)" — only verified the **scoring layer** (one dimension). Got bitten.
+>
+> ✅ `analysis/008`: "predicted PASS, **moderate confidence**" — verified the scoring layer (Python 3.13) **and** the Python version (3.11) **and** the fresh-clone equivalence. Two independent dimensions, but the actual GitHub Actions runner was still untested. So "moderate", not "high".
+>
+> ✅ `analysis/010`: "Confirmed by 3 green GitHub Actions runs after the fix." — external evidence (real CI runs) exists, so the upgrade to "confirmed" is justified.
+
+---
+
 ## 🤝 Community norms
 
 - Disagreements about check semantics → open an issue with a 50-word scenario, not a 500-word essay

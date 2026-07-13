@@ -46,7 +46,9 @@
 ### 方法论博客
 
 - [`docs/blog/001-auditable-llm-eval-no-green-lights.md`](docs/blog/001-auditable-llm-eval-no-green-lights.md) — *Auditable LLM Eval: No Green Lights*（HN 向，以"100% 绿 vs 67–69% 真"为可复现实证链）
-- [`docs/blog/002-formation-day.md`](docs/blog/002-formation-day.md) — *One day, ten commits, two red CI runs*（形成史：从 loose scripts 到 4 层 + CI 闸门 + 红→绿闭环）
+- [`docs/blog/002-formation-day.md`](docs/blog/002-formation-day.md) — *One day, ten commits, two red CI runs*（中文形成史：从 loose scripts 到 4 层 + CI 闸门 + 红→绿闭环）
+- [`docs/blog/002-formation-day-en.md`](docs/blog/002-formation-day-en.md) — *We shipped an auditable LLM eval in one day. The CI went red twice. That's the point.*（002 英文 HN 版）
+- [`docs/blog/003-ci-discipline-postmortem.md`](docs/blog/003-ci-discipline-postmortem.md) — *Cache the cache, not the cache config*（CI 复盘专题，HN 投稿候选：cache:pip 失败 + 模拟 CI 双维度 + 措辞降级规则）
 - [`docs/GETTING_STARTED.md`](docs/GETTING_STARTED.md) — **🚀 小白上手指南**（从装 Python 到跑出"假绿"证据，含完整训练路径与排错表）
 
 ---
