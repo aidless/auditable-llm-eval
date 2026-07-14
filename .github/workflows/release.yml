@@ -60,6 +60,12 @@ jobs:
         # This is the same single command a contributor runs locally before opening a PR.
         # No Ollama / GPU / external service required: the verifier re-runs the scorer
         # against committed outputs.jsonl, never against the model.
+        # PYTHONIOENCODING=utf-8: required because windows-latest runners
+        # default to codepage cp1252 and Python crashes with UnicodeEncodeError
+        # on the Chinese / box-drawing chars the scorer selftest and
+        # verifier output. Confirmed in analysis/014; fix landed 2026-07-14.
+        env:
+          PYTHONIOENCODING: utf-8
         run: |
           python scripts/validate_release.py
 
@@ -72,6 +78,9 @@ jobs:
         # Use Python (not [ -d ]) for OS-portable directory check — the
         # default windows-latest shell is pwsh, which doesn't recognize
         # bash test syntax.
+        # Same PYTHONIOENCODING fix as the validate step (defense in depth).
+        env:
+          PYTHONIOENCODING: utf-8
         run: |
           python -c "import os, sys; sys.exit(0 if os.path.isdir('tests') else 1)" && python -m unittest discover -s tests -v || echo "No tests/ directory yet — skipping."
 

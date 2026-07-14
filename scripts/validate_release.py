@@ -19,10 +19,27 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import os
 import re
 import subprocess
 import sys
 from pathlib import Path
+
+
+# ---------------------------------------------------------------------------
+# Subprocess environment contract: child processes must print UTF-8 safely.
+#
+# Without this, on windows-latest (default OEM-US / cp1252 console) Python
+# attempts `sys.stdout` writes with codepage=cps1252, then raises
+# `UnicodeEncodeError: 'charmap' codec can't encode character ...`
+# whenever the subprocess outputs a Chinese string (e.g. `完全安全` from
+# scorer selftest, `═` box-drawing from verify_copilot_run.py).
+#
+# PYTHONIOENCODING=utf-8 forces the child Python to encode stdout/stderr
+# as UTF-8 regardless of the parent's console codepage.
+# See analysis/014-ci-v3-confirmed-and-fix.md for the diagnosis.
+# ---------------------------------------------------------------------------
+_CHILD_ENV = {**os.environ, "PYTHONIOENCODING": "utf-8"}
 
 
 # ---------------------------------------------------------------------------
@@ -61,6 +78,7 @@ def check_scorer_selftest(scorer: Path) -> bool:
         r = subprocess.run(
             [sys.executable, str(scorer), "--selftest"],
             capture_output=True, text=True, timeout=60,
+            env=_CHILD_ENV,
         )
     except Exception as e:
         _fail(f"selftest raised: {e}")
@@ -136,6 +154,7 @@ def check_verifier(runs_glob: str, dataset: Path, scorer: Path, verifier: Path) 
                  "--dataset", str(dataset),
                  "--scorer", str(scorer)],
                 capture_output=True, text=True, timeout=600,
+                env=_CHILD_ENV,
             )
         except Exception as e:
             _fail(f"{run_dir}: verifier raised {e}")
@@ -163,6 +182,7 @@ def check_gitignore(repo_root: Path) -> bool:
         r = subprocess.run(
             ["git", "ls-files"],
             cwd=str(repo_root), capture_output=True, text=True, timeout=30,
+            env=_CHILD_ENV,
         )
     except Exception as e:
         _fail(f"git ls-files raised: {e}")
