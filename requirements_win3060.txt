@@ -25,4 +25,4 @@ numpy<2
 #    （client.results(search) 必传、源码端点 /e-print 返回 PDF 优雅降级等）。
 #    注意: arXiv 服务端已对 /e-print/ 与 /src/ 返回 PDF，正文级 live 抓取会降级为摘要；
 #         真正正文级请用 --from-dir 传入手动下载的源码包（详见 SKILL.md / playbook §6）。
-arxiv==4.0.0
+arxiv==4.0.1
