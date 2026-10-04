@@ -181,7 +181,7 @@ python run_all.py --papers 200 --manuscript "你的稿件.tex" --reviews "review
 - [`docs/adr/0004-verifier-is-not-scorer.md`](outputs/llm-lab/docs/adr/0004-verifier-is-not-scorer.md) — verifier≠scorer（以 31/31 假绿 vs 7.59% 为活标本）
 
 **方法论博客**
-- [`docs/blog/001-auditable-llm-eval-no-green-lights.md`](outputs/llm-lab/docs/blog/001-auditable-llm-eval-no-green-lights.md) — *Auditable LLM Eval: No Green Lights*（HN 向；以 v3 假绿→v3c 77.69% 修复验证为实证链）
+- [`docs/blog/001-auditable-llm-eval-no-green-lights.md`](outputs/llm-lab/docs/blog/001-auditable-llm-eval-no-green-lights.md) — *Auditable LLM Eval: No Green Lights*（HN 向；以 v3 假绿→v3c 修复为实证链。注：77.69% 为早期 verifier 口径，权威 scorer 复测 69.00%，见 analysis/003）
 
 **实证数据权威源**
 - `COPILOT_RETROSPECTIVE.md` — 评测平台复盘（分数链至 v2）
@@ -189,4 +189,4 @@ python run_all.py --papers 200 --manuscript "你的稿件.tex" --reviews "review
 
 ---
 
-*工程状态（2026-07-13）：M0/M2 训练产物 `outputs/copilot_3b_lora_v3c`（QLoRA 4bit）已合并导出并接入评测；评测实证链见 §10（v3 假绿 7.59% → 二分锁定低侵入超参 → v3c 修复 77.69%）。本 README 引用的 `outputs/llm-lab/docs/` 文档为**本轮会话重建落盘**（此前因会话断连丢失），均以真实代码理念与评测数据为依据。*
+*工程状态（2026-07-13）：M0/M2 训练产物 `outputs/copilot_3b_lora_v3c`（QLoRA 4bit）已合并导出并接入评测；评测实证链见 §10（v3 假绿 7.59% → 二分锁定低侵入超参 → v3c 修复：初测 77.69%，权威 scorer 复测 **69.00%**，见 analysis/003 诚实回退记录）。本 README 引用的 `outputs/llm-lab/docs/` 文档为**本轮会话重建落盘**（此前因会话断连丢失），均以真实代码理念与评测数据为依据。*
