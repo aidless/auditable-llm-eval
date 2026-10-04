@@ -16,7 +16,7 @@ accelerate
 bitsandbytes-windows
 peft
 sentencepiece
-numpy<2
+numpy<3
 
 # 3) 数据构建（arXiv 抓取）
 #    脚本已兼容 arxiv 1.4.2 与 4.x；但实测 1.4.2 的查询端点用 http://，
