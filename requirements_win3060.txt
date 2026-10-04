@@ -9,7 +9,7 @@
 unsloth[windows-torch230] @ git+https://github.com/unslothai/unsloth.git
 
 # 2) 训练框架与工具
-trl>=0.9
+trl>=1.14.1
 transformers>=4.45
 datasets
 accelerate
