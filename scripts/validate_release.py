@@ -77,7 +77,7 @@ def check_scorer_selftest(scorer: Path) -> bool:
     try:
         r = subprocess.run(
             [sys.executable, str(scorer), "--selftest"],
-            capture_output=True, text=True, timeout=60,
+            capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=60,
             env=_CHILD_ENV,
         )
     except Exception as e:
@@ -153,7 +153,7 @@ def check_verifier(runs_glob: str, dataset: Path, scorer: Path, verifier: Path) 
                  "--run-dir", run_dir,
                  "--dataset", str(dataset),
                  "--scorer", str(scorer)],
-                capture_output=True, text=True, timeout=600,
+                capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=600,
                 env=_CHILD_ENV,
             )
         except Exception as e:
@@ -181,7 +181,7 @@ def check_gitignore(repo_root: Path) -> bool:
     try:
         r = subprocess.run(
             ["git", "ls-files"],
-            cwd=str(repo_root), capture_output=True, text=True, timeout=30,
+            cwd=str(repo_root), capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=30,
             env=_CHILD_ENV,
         )
     except Exception as e:
