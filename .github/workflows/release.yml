@@ -82,7 +82,15 @@ jobs:
         env:
           PYTHONIOENCODING: utf-8
         run: |
-          python -c "import os, sys; sys.exit(0 if os.path.isdir('tests') else 1)" && python -m unittest discover -s tests -v || echo "No tests/ directory yet — skipping."
+          # A `|| echo "... skipping"` tail makes this step unconditionally green:
+          # the 39 tests in tests/test_scorer.py were never able to fail the build.
+          # The guard only has to cover the "no tests/ directory" case, so keep the
+          # swallow scoped to that and let a real test failure propagate.
+          if python -c "import os, sys; sys.exit(0 if os.path.isdir('tests') else 1)"; then
+            python -m unittest discover -s tests -v
+          else
+            echo "::notice title=No tests::tests/ does not exist in this commit"
+          fi
 
       - name: Print final report
         if: always()
