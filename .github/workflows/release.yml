@@ -81,6 +81,8 @@ jobs:
         # Same PYTHONIOENCODING fix as the validate step (defense in depth).
         env:
           PYTHONIOENCODING: utf-8
+        # bash syntax below (if/fi) needs Git Bash on windows-latest (pwsh chokes)
+        shell: bash
         run: |
           # A `|| echo "... skipping"` tail makes this step unconditionally green:
           # the 39 tests in tests/test_scorer.py were never able to fail the build.
