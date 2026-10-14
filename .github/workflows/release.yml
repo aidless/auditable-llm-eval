@@ -48,7 +48,7 @@ jobs:
           # `setup-python@v5` would attempt to hash requirements*.txt, fail on
           # requirements_win3060.txt (which has windowed-CUDA names with
           # no PyPI mapping), and exit 1 within 8 seconds. See analysis/007.
-          python-version: "3.11"
+          python-version: "3.12"
           check-latest: false
 
       - name: Show environment
