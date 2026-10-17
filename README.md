@@ -51,6 +51,16 @@ pip install -r requirements_win3060.txt
 - `unsloth[windows-torch230]` 会拉入**兼容的 CUDA 12.1 torch**——**先装它，再也不要单独 `pip install torch`**，否则易出现 torch/CUDA 版本错配。
 - `arxiv==1.4.2` 已锁版（规避 arxiv 4.x 破坏性变更；但 arXiv 服务端现网对正文级源码的 PDF 降级无法靠锁版本解决，见 §6）。
 
+### 2.1 无 GPU / 任意 OS 的零依赖自检（不需要上面的安装）
+
+评分器 `copilot/score_copilot_run_v2.py` 及其 39 个单元测试**只用 Python 标准库**——不装任何依赖、不限 Windows/Linux 即可验证：
+
+```bash
+python -m unittest discover -s tests    # 39 tests; stdlib only, any OS
+```
+
+只有训练与模型推理（M0/M2/M3 的模型腿）才需要 §1/§2 的 3060 + Windows 环境。本仓库是制品集合（数据 + 脚本 + 报告），不是可 `pip install` 的库；评分器按「单文件脚本 + 标准库」设计，测试自带 repo 根路径处理。
+
 ---
 
 ## 3. 目录结构
