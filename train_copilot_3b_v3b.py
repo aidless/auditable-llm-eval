@@ -5,7 +5,7 @@ Pure transformers + bitsandbytes — NO unsloth, NO triton (Windows-compatible).
 
 Run:
   set HF_HOME=F:/hf_cache
-  F:\train_env\Scripts\python.exe train_copilot_3b_v3b.py
+  python train_copilot_3b_v3b.py   # 需训练环境（venv），见 COPILOT_RETROSPECTIVE.md
 """
 import os, sys, json, torch, gc
 from datetime import datetime
