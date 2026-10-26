@@ -5,9 +5,26 @@
 [![Python ≥ 3.10](https://img.shields.io/badge/python-≥3.10-blue.svg)]()
 [![No GPU for CI](https://img.shields.io/badge/CI-no%20GPU%20needed-success.svg)](./.github/workflows/README.md)
 [![CI: 3 OS](https://img.shields.io/badge/CI-3%20OS%20(ubuntu%20%7C%20windows%20%7C%20macos)-blueviolet)](./.github/workflows/release.yml)
-[![39 unit tests](https://img.shields.io/badge/tests-39%20%2F%2039%20OK-success.svg)](./tests/)
+[![40 unit tests](https://img.shields.io/badge/tests-40%20%2F%2040%20OK-success.svg)](./tests/)
 
 > **TL;DR.** This repo is an auditable LLM evaluation pipeline (10 programmatic `reference_checks`, including *cognitive-honesty* dimensions) that catches false-green verdicts. Two committed runs reproduce in one command: naive verdicts **100% green**, authoritative scorer **69.00%** and **67.00%** — a 30-point deception zone, falsifiable by any reader. Full story: [docs/blog/001](./outputs/llm-lab/docs/blog/001-auditable-llm-eval-no-green-lights.md). 中文小白指南: [docs/GETTING_STARTED.md](./outputs/llm-lab/docs/GETTING_STARTED.md).
+
+## 60-second demo
+
+No API key, no GPU, no third-party package. It re-scores the two committed
+runs from their answers and checks the result against the committed summaries:
+
+```bash
+git clone https://github.com/aidless/auditable-llm-eval && cd auditable-llm-eval
+python3 demo.py
+```
+
+![auditable eval terminal demo](docs/assets/demo.gif)
+
+The naive checker sees **100% green**; the reference-check scorer sees **0.67**
+and **0.69** on the same 100 answers, and recomputing from the answer files
+matches both committed summaries. That is the deception zone this repository
+exists to make falsifiable.
 
 ## What this repo is really about
 
@@ -53,10 +70,10 @@ pip install -r requirements_win3060.txt
 
 ### 2.1 无 GPU / 任意 OS 的零依赖自检（不需要上面的安装）
 
-评分器 `copilot/score_copilot_run_v2.py` 及其 39 个单元测试**只用 Python 标准库**——不装任何依赖、不限 Windows/Linux 即可验证：
+评分器 `copilot/score_copilot_run_v2.py` 及其 40 个单元测试**只用 Python 标准库**——不装任何依赖、不限 Windows/Linux 即可验证：
 
 ```bash
-python -m unittest discover -s tests    # 39 tests; stdlib only, any OS
+python -m unittest discover -s tests    # 40 tests; stdlib only, any OS
 ```
 
 只有训练与模型推理（M0/M2/M3 的模型腿）才需要 §1/§2 的 3060 + Windows 环境。本仓库是制品集合（数据 + 脚本 + 报告），不是可 `pip install` 的库；评分器按「单文件脚本 + 标准库」设计，测试自带 repo 根路径处理。

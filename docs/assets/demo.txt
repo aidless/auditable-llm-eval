@@ -1,0 +1,17 @@
+# captured 2026-10-25 from: python3 demo.py (rc=0, 91 ms)
+# raw stdout; docs/assets/demo.gif is a curated view
+Two committed runs, same 50 tasks, two judges:
+
+v3
+  naive checker : 50/50 green (100%)
+  authoritative : 0.67  (committed 0.67, match=True)
+  unsupported   : 7
+
+v3c
+  naive checker : 50/50 green (100%)
+  authoritative : 0.69  (committed 0.69, match=True)
+  unsupported   : 3
+
+deception gap : naive 100% green vs authoritative 68% — 32 points
+
+demo: 2 runs · 100 answers re-scored · 0 API calls
