@@ -11,6 +11,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Added
+- `pyproject.toml` — 评测腿的最小打包配置（**零运行时依赖**），提供 `auditable-eval-score` /
+  `auditable-eval-verify` 两个 console script。定位不变：本仓仍是制品集合，见
+  `analysis/016-week1-doc-consistency-and-packaging.md`
 - `specs/scoring-rules.json` — machine-checkable contract for the 10 `reference_check` types + runtime/overclaim detection
 - `specs/eval.endpoints.json` — CLI contract for `eval/run_copilot_eval.py`, `verify_copilot_run.py`, `copilot/score_copilot_run_v2.py`
 - `specs/test_50.schema.json` — JSON Schema for the benchmark file
@@ -18,6 +21,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `analysis/002-verify-data-model-rewrite.md` — discipline checker re-aligned with actual scorer output shape
 - `analysis/003-honesty-pass.md` — why docs were rewritten to match reproducible reality
 - `analysis/004-false-green-evidence.md` — both committed runs reproduce 100%-green vs 67–69% real
+
+### Fixed
+- 文档漂移三处（`analysis/016`）：测试计数 39 → **40**（`tests/README.md` + 两处 workflow 注释）；
+  TL;DR 的 "30-point deception zone" → **32 points**，与 `demo.py` 实际输出一致
 
 ---
 

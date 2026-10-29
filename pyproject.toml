@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=77", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "auditable-llm-eval"
+version = "1.0.0"
+description = "Auditable LLM evaluation pipeline: verifier separate from scorer, programmatic reference checks, documented rollback"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+license-files = ["LICENSE"]
+keywords = ["llm", "evaluation", "audit", "llm-eval", "reproducibility", "llmops"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+# 运行时依赖为空：评分器与校验器只用标准库，这是本仓的核心命题之一。
+# 训练腿的依赖在 requirements_win3060.txt（Windows + CUDA，与本包无关）。
+dependencies = []
+
+[project.scripts]
+auditable-eval-score = "copilot.score_copilot_run_v2:main"
+auditable-eval-verify = "verify_copilot_run:main"
+
+[tool.setuptools]
+packages = ["copilot"]
+py-modules = ["verify_copilot_run"]

@@ -15,7 +15,7 @@ python -m unittest discover -s tests
 A passing run looks like:
 
 ```
-Ran 39 tests in 0.005s
+Ran 40 tests in 0.073s
 OK
 ```
 
@@ -23,7 +23,7 @@ A failing run prints `FAIL: test_name (ClassName.test_method)` followed by a tra
 
 ## What is covered
 
-`test_scorer.py` (39 cases, the only file in this directory for now):
+`test_scorer.py` (39 cases):
 
 | Test class | What it asserts |
 |---|---|
@@ -42,6 +42,15 @@ A failing run prints `FAIL: test_name (ClassName.test_method)` followed by a tra
 | `TestScoreOne` | end-to-end: full pass / partial pass / runtime_error / harness_error / soft bucketing / unknown check |
 | `TestDispatchSpecConsistency` | DISPATCH keys (10) match `specs/scoring-rules.json` (10) |
 | `TestSelftest` | the embedded 3-case `selftest()` still returns 0 |
+
+`test_demo.py` (1 case, added 2026-10-25 with the 60-second demo):
+
+| Test class | What it asserts |
+|---|---|
+| `TestDemo` | `demo.py` exits 0, prints 0.67 / 0.69, `match=True` and "0 API calls" — i.e. the headline numbers are re-derived from the committed answer files, not hard-coded |
+
+Total: **40** (39 scorer + 1 demo). CI runs both entry points:
+`checks.yml` uses pytest, `release.yml` and `mutation-control.yml` use stdlib unittest.
 
 ## What is **not** covered (deliberately)
 

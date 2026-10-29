@@ -14,6 +14,18 @@ This follows a **留痕可审计 (auditable trace)** discipline (the same patter
 | 002 | [`002-verify-data-model-rewrite.md`](./002-verify-data-model-rewrite.md) | verify script false-FAIL on sections [3][5][6] | Rewrote verify against actual scorer output shape (summary.json single object, report.jsonl exact_checks keyed dict). All 7 sections now PASS. |
 | 003 | [`003-honesty-pass.md`](./003-honesty-pass.md) | Committed run contradicted documented numbers | Downgraded 7.59% / 77.69% headline numbers to 67% / 69% real committed runs. Honest hedge retired; docs now reproducible end-to-end. |
 | 004 | [`004-false-green-evidence.md`](./004-false-green-evidence.md) | Need to validate the false-green phenomenon | Two committed runs both show naive 100% green vs real 67-69%, reproducible in one command. Exhibit for the layering thesis. |
+| 005 | [`005-self-review.md`](./005-self-review.md) | Post-1.0 audit-layer self-review | 11-item checklist over `specs/` + `analysis/` + `CHANGELOG` + workflows. |
+| 006 | [`006-ci-simulation.md`](./006-ci-simulation.md) | Need a local stand-in for GitHub Actions | `git archive` mirror + same CI command; proved the *scoring* layer passes. |
+| 007 | [`007-ci-v2-fix.md`](./007-ci-v2-fix.md) | Two CI runs went red | Removed broken `cache: pip` from `setup-python@v5`. |
+| 008 | [`008-ci-v2-verification.md`](./008-ci-v2-verification.md) | Verify the CI fix locally | Scoring layer verified PASS on a fresh clone (Python 3.11). |
+| 009 | [`009-self-review.md`](./009-self-review.md) | Self-review after the CI v2 fix | Checklist over workflow edit + `analysis/007`/`008`. |
+| 010 | [`010-confirmed.md`](./010-confirmed.md) | Was `cache: pip` really the root cause? | **Closed**: three green CI runs confirm removing it fixed both red runs. |
+| 011 | — | *(number skipped; no entry was ever written)* | Kept as a gap rather than reused, per the "number sequentially" rule. |
+| 012 | [`012-final-state-report.md`](./012-final-state-report.md) | End-of-day closure / "where do I start?" | 1-page cheat sheet for the formation day (HEAD `f51a19e`). |
+| 013 | [`013-3os-matrix-red.md`](./013-3os-matrix-red.md) | 3-OS matrix red | Red runs confirmed, root cause **inferred not confirmed**. |
+| 014 | [`014-ci-v3-confirmed-and-fix.md`](./014-ci-v3-confirmed-and-fix.md) | Root cause hunt for the 3-OS red | `PYTHONIOENCODING=utf-8` confirmed by stack trace + local repro. |
+| 015 | [`015-fix-insufficient.md`](./015-fix-insufficient.md) | Fix from `014` did not turn CI green | Confidence demoted to "unverified, likely insufficient". |
+| 016 | [`016-week1-doc-consistency-and-packaging.md`](./016-week1-doc-consistency-and-packaging.md) | Cross-repo audit found 3 doc drifts in this repo | Added zero-dependency `pyproject.toml`; aligned the test count to 40 and the deception-zone wording to the 32 points `demo.py` actually prints. |
 
 ---
 

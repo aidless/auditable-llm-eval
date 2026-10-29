@@ -3,7 +3,7 @@ name: mutation-control
 # Proves the two gates in release.yml can actually redden the build.
 #
 # 1. `python scripts/validate_release.py` -- the four-check release assertion.
-# 2. `python -m unittest discover -s tests -v` -- the 39 scorer tests, whose step
+# 2. `python -m unittest discover -s tests -v` -- the 40 tests, whose step
 #    was `... || echo "skipping"` and therefore unconditionally green.
 #
 # A green baseline run cannot tell "gate passed" from "gate swallowed the error",
@@ -199,7 +199,7 @@ jobs:
           set -e
           echo "gate_exit=$rc" >> "$GITHUB_OUTPUT"
           if [ "$rc" -ne 0 ]; then
-            echo "::error title=Baseline red::the 39 scorer tests do not pass on a clean tree (exit $rc). Refusing to mutation-test a gate that is already failing."
+            echo "::error title=Baseline red::the 40 tests do not pass on a clean tree (exit $rc). Refusing to mutation-test a gate that is already failing."
             exit 1
           fi
           if ! grep -q '^OK' "$RUNNER_TEMP/g2_base.log"; then

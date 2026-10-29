@@ -7,7 +7,7 @@
 [![CI: 3 OS](https://img.shields.io/badge/CI-3%20OS%20(ubuntu%20%7C%20windows%20%7C%20macos)-blueviolet)](./.github/workflows/release.yml)
 [![40 unit tests](https://img.shields.io/badge/tests-40%20%2F%2040%20OK-success.svg)](./tests/)
 
-> **TL;DR.** This repo is an auditable LLM evaluation pipeline (10 programmatic `reference_checks`, including *cognitive-honesty* dimensions) that catches false-green verdicts. Two committed runs reproduce in one command: naive verdicts **100% green**, authoritative scorer **69.00%** and **67.00%** — a 30-point deception zone, falsifiable by any reader. Full story: [docs/blog/001](./outputs/llm-lab/docs/blog/001-auditable-llm-eval-no-green-lights.md). 中文小白指南: [docs/GETTING_STARTED.md](./outputs/llm-lab/docs/GETTING_STARTED.md).
+> **TL;DR.** This repo is an auditable LLM evaluation pipeline (10 programmatic `reference_checks`, including *cognitive-honesty* dimensions) that catches false-green verdicts. Two committed runs reproduce in one command: naive verdicts **100% green**, authoritative scorer **69.00%** and **67.00%** — a **32-point** deception zone (100% naive green vs. the 68% mean of the two authoritative scores), falsifiable by any reader. Full story: [docs/blog/001](./outputs/llm-lab/docs/blog/001-auditable-llm-eval-no-green-lights.md). 中文小白指南: [docs/GETTING_STARTED.md](./outputs/llm-lab/docs/GETTING_STARTED.md).
 
 ## 60-second demo
 
@@ -76,7 +76,18 @@ pip install -r requirements_win3060.txt
 python -m unittest discover -s tests    # 40 tests; stdlib only, any OS
 ```
 
-只有训练与模型推理（M0/M2/M3 的模型腿）才需要 §1/§2 的 3060 + Windows 环境。本仓库是制品集合（数据 + 脚本 + 报告），不是可 `pip install` 的库；评分器按「单文件脚本 + 标准库」设计，测试自带 repo 根路径处理。
+只有训练与模型推理（M0/M2/M3 的模型腿）才需要 §1/§2 的 3060 + Windows 环境。
+
+评测腿现在**可以**装成包（2026-10-28 新增 `pyproject.toml`，运行时依赖仍然为空）：
+
+```bash
+pip install -e .            # 零运行时依赖；装完得到 auditable-eval-score 命令
+auditable-eval-score --selftest
+```
+
+但本仓库的定位仍是**制品集合**（数据 + 脚本 + 报告），不是一个需要被依赖的库：
+评分器按「单文件脚本 + 标准库」设计，测试自带 repo 根路径处理，装包只是为了
+「能不能 pip install」这个问题有一个诚实的答案。
 
 ---
 
@@ -85,6 +96,7 @@ python -m unittest discover -s tests    # 40 tests; stdlib only, any OS
 ```
 .
 ├── README.md                       # 本文件
+├── pyproject.toml                  # 评测腿的最小打包配置（零运行时依赖）
 ├── requirements_win3060.txt        # 3060 Windows 训练环境依赖
 ├── qwen25-3b-tmlr-finetune-plan.md # 方案文档（含 §2.4 审稿偏好数据来源与格式）
 ├── RUN_GUIDE.md                    # M0→M3 运行监控清单 + 预期输出表格
