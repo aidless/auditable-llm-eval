@@ -9,6 +9,23 @@
 
 > **TL;DR.** This repo is an auditable LLM evaluation pipeline (10 programmatic `reference_checks`, including *cognitive-honesty* dimensions) that catches false-green verdicts. Two committed runs reproduce in one command: naive verdicts **100% green**, authoritative scorer **69.00%** and **67.00%** — a **32-point** deception zone (100% naive green vs. the 68% mean of the two authoritative scores), falsifiable by any reader. Full story: [docs/blog/001](./outputs/llm-lab/docs/blog/001-auditable-llm-eval-no-green-lights.md). 中文小白指南: [docs/GETTING_STARTED.md](./outputs/llm-lab/docs/GETTING_STARTED.md).
 
+## 证明什么 / 不证明什么
+
+> 诚实性约束（fail-closed）：本仓声明的是**可复现的评测机制**，不是「某模型有多好」的排行榜。
+
+**证明什么**
+
+1. **假绿是可检测的**：同一批 50 题、同一组回答上，朴素检查器报 100% green，权威参考检查评分器只给 0.67 / 0.69 —— 32 个百分点的「欺骗区间」。这个区间**可在本仓内一步复现**（`python3 demo.py`，下方复算段给出精确命令与产物路径）。
+2. **评分与校验分离是有用的**：`verifier`（看「回答是否覆盖题目要求」）与 `scorer`（看「主张是否被证据支撑」）是两套逻辑；`specs/scoring-rules.json` 里 10 个 `reference_checks` + 3 个 `global_detectors` 是**声明式配置**，改规则不需要改评分器代码。
+3. **零依赖可跑**：评分器与 40 个单元测试只用 Python 标准库，不装任何第三方包即可在任意 OS 验证。
+
+**不证明什么**
+
+1. **不证明任何模型在 TMLR 任务上的「能力」**：`outputs/` 下两个 run（v3 / v3c）是**同一个微调方案的两次配置**，不是 SOTA 对比；0.67 vs 0.69 是配置差异，不是「v3c 比 v3 好 2 分」的能力结论。
+2. **不证明 100% green 是错的结论**：我们证明的是「朴素 green 与参考检查 green 不一致」这个**机制**；至于某一次具体评估该信哪个，取决于评测者是否接受 `verifier≠scorer` 的前提（ADR 0004）。
+3. **不证明无 GPU 环境能训练**：M0/M2 训练与 M3 模型推理**必须在 3060 + Windows** 上执行；本仓在沙箱/CI 里只跑评测腿（§2.1）。
+4. **不证明 arXiv 正文级抓取稳定**：arXiv 服务端现网对 `/e-print/`、`/src/` 返回 PDF（非源码包），live 抓取会降级为摘要（§6.2）。
+
 ## 60-second demo
 
 No API key, no GPU, no third-party package. It re-scores the two committed
@@ -25,6 +42,23 @@ The naive checker sees **100% green**; the reference-check scorer sees **0.67**
 and **0.69** on the same 100 answers, and recomputing from the answer files
 matches both committed summaries. That is the deception zone this repository
 exists to make falsifiable.
+
+## 复算（Reproduction）
+
+所有 README 中的数字都能从本仓**落盘证据**重算，命令如下（零 API 调用，零第三方包）：
+
+| 数字 | 从哪里重算 | 命令 |
+|---|---|---|
+| 40 个单元测试通过 | `tests/test_scorer.py`(39) + `tests/test_demo.py`(1) | `python3 -m unittest discover -s tests` |
+| 0.67 / 0.69 权威评分 | `outputs/llm-lab/datasets/llm_lab_copilot/runs/<v3|v3c>/outputs.jsonl` + `specs/scoring-rules.json` | `python3 demo.py` |
+| 100% naive green | `outputs/llm-lab/datasets/llm_lab_copilot/runs/<v3|v3c>/verdicts.jsonl`（`verdict=="pass"` 计数） | `python3 demo.py`（demo 内部打印） |
+| 32 点欺骗区间 | `100% − (0.67+0.69)/2 = 32%`，由 demo 输出 `deception gap` 行直接给出 | `python3 demo.py` |
+| 10 个 reference_checks | `specs/scoring-rules.json` 的 `checks` 数组长度 | `python3 -c "import json;print(len(json.load(open('specs/scoring-rules.json'))['checks']))"` |
+| 3 个 global_detectors | `specs/scoring-rules.json` 的 `global_detectors` 数组长度 | 同上（`['global_detectors']`） |
+
+**验证脚本入口**：`scripts/validate_release.py`（CI 的 `release.yml` 在每次 push 时跑：① `--selftest` ② `unittest discover` ③ 集成复算）。
+
+> 数字一致性由 `tests/test_demo.py` 守护：它断言 demo 输出中的 0.67 / 0.69 与 `match=True`，即**标题数字是从回答文件重算出来的，不是硬编码**。
 
 ## What this repo is really about
 
