@@ -1,13 +1,30 @@
 # Auditable LLM Evaluation: catching false-green verdicts
 
+[![checks](https://github.com/aidless/auditable-llm-eval/actions/workflows/checks.yml/badge.svg)](https://github.com/aidless/auditable-llm-eval/actions/workflows/checks.yml)
 [![release-validate](https://github.com/aidless/auditable-llm-eval/actions/workflows/release.yml/badge.svg)](https://github.com/aidless/auditable-llm-eval/actions/workflows/release.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 [![Python ≥ 3.10](https://img.shields.io/badge/python-≥3.10-blue.svg)]()
-[![No GPU for CI](https://img.shields.io/badge/CI-no%20GPU%20needed-success.svg)](./.github/workflows/README.md)
-[![CI: 3 OS](https://img.shields.io/badge/CI-3%20OS%20(ubuntu%20%7C%20windows%20%7C%20macos)-blueviolet)](./.github/workflows/release.yml)
-[![40 unit tests](https://img.shields.io/badge/tests-40%20%2F%2040%20OK-success.svg)](./tests/)
 
-> **TL;DR.** This repo is an auditable LLM evaluation pipeline (10 programmatic `reference_checks`, including *cognitive-honesty* dimensions) that catches false-green verdicts. Two committed runs reproduce in one command: naive verdicts **100% green**, authoritative scorer **69.00%** and **67.00%** — a **32-point** deception zone (100% naive green vs. the 68% mean of the two authoritative scores), falsifiable by any reader. Full story: [docs/blog/001](./outputs/llm-lab/docs/blog/001-auditable-llm-eval-no-green-lights.md). 中文小白指南: [docs/GETTING_STARTED.md](./outputs/llm-lab/docs/GETTING_STARTED.md).
+> **TL;DR.** An auditable LLM evaluation pipeline (10 programmatic `reference_checks`,
+> including *cognitive-honesty* dimensions) that catches false-green verdicts.
+> **One dataset, two judges, 100 committed answers:** the naive checker returns
+> **100/100 green**; the authoritative scorer returns **0.6900** and **0.6700**
+> (mean 0.68) — a **32-point** deception zone, recomputed from the committed
+> answers by `python3 demo.py`. Any reader can falsify it.
+> Full story: [docs/blog/001](./outputs/llm-lab/docs/blog/001-auditable-llm-eval-no-green-lights.md).
+> 中文小白指南: [docs/GETTING_STARTED.md](./outputs/llm-lab/docs/GETTING_STARTED.md).
+
+**88 tests** (`pytest tests -q`), **no GPU, no API key, no third-party package.**
+
+## Install
+
+```bash
+git clone https://github.com/aidless/auditable-llm-eval && cd auditable-llm-eval
+python3 -m venv .venv && . .venv/bin/activate
+pip install -e . && pip install pytest
+pytest tests -q          # 88 passed
+python3 demo.py          # 2 runs · 100 answers re-scored · 0 API calls
+```
 
 ## 60-second demo
 
@@ -21,16 +38,14 @@ python3 demo.py
 
 ![auditable eval terminal demo](docs/assets/demo.gif)
 
-The naive checker sees **100% green**; the reference-check scorer sees **0.67**
-and **0.69** on the same 100 answers, and recomputing from the answer files
-matches both committed summaries. That is the deception zone this repository
-exists to make falsifiable.
+Recomputing from the answer files matches both committed summaries — that is
+the single number this repository exists to make falsifiable (see TL;DR above).
 
 ## What this repo is really about
 
 Two legs, and the second one is the point.
 
-1. **Evaluation leg (M3 + `llm-lab`)** — the auditable evaluation pipeline. 10 programmatic `reference_checks`, including *cognitive-honesty* dimensions, that catch false-green verdicts: the naive check reports 100% green while the authoritative scorer returns 69.00% / 67.00%. This is why the repo exists.
+1. **Evaluation leg (M3 + `llm-lab`)** — the auditable evaluation pipeline: 10 programmatic `reference_checks`, including *cognitive-honesty* dimensions, that catch false-green verdicts. This is why the repo exists.
 2. **Training leg (M0–M2)** — a QLoRA fine-tune of `Qwen2.5-3B-Instruct` into a TMLR-domain expert on a single 6 GB GPU. It exists to give the evaluation leg something real to score.
 
 Everything from here down documents the training leg in detail.
