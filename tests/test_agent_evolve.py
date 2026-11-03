@@ -210,6 +210,33 @@ class TestGates(unittest.TestCase):
                               "--fail-on-proposal"])
         self.assertEqual(rc, 1)
 
+    def _write_unauthorized_trace(self, path):
+        trace = {
+            "tool_identity": {"n_tools": 1, "flagged": [],
+                              "tools": [{"name": "send_message", "digest": "x",
+                                         "flagged": False, "rule_ids": []}]},
+            "tool_usage": {"state": "unauthorized", "n_calls": 1,
+                           "tools_called": ["ghost_tool"], "unauthorized": ["ghost_tool"]},
+            "tool_binding": {"state": "verified", "mismatches": []},
+        }
+        path.write_text(json.dumps(trace), encoding="utf-8")
+
+    def test_usage_gate_reddens_on_unauthorized_call(self):
+        with __import__("tempfile").TemporaryDirectory() as d:
+            tp = Path(d) / "trace.json"
+            self._write_unauthorized_trace(tp)
+            rc = evolve.main(["scan", "--trace", str(tp),
+                              "--out", str(Path(d) / "r.json"), "--fail-on-usage"])
+        self.assertEqual(rc, 1)
+
+    def test_usage_signal_without_flag_does_not_block(self):
+        with __import__("tempfile").TemporaryDirectory() as d:
+            tp = Path(d) / "trace.json"
+            self._write_unauthorized_trace(tp)
+            rc = evolve.main(["scan", "--trace", str(tp),
+                              "--out", str(Path(d) / "r.json")])
+        self.assertEqual(rc, 0)
+
 
 if __name__ == "__main__":
     sys.exit(unittest.main())

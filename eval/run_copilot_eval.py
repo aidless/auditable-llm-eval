@@ -65,6 +65,9 @@ def main():
                     help="本次 run 实际发生的工具调用日志（JSONL 或 JSON 数组，"
                          "每项 {tool, args, ...}）；传入则落成 tool_calls.json，"
                          "由 trace 校验『实际调用的』是否都在白名单内")
+    ap.add_argument("--store-raw-args", action="store_true",
+                    help="把工具调用的原始参数也写进 tool_calls.json。默认不写："
+                         "只存参数键名 + digest，避免把 token/密钥/聊天内容持久化到 run 目录")
     ap.add_argument("--base-url", default="http://localhost:11434")
     ap.add_argument("--temperature", type=float, default=0.0)
     ap.add_argument("--num-predict", type=int, default=400)
@@ -83,7 +86,7 @@ def main():
     run_dir.mkdir(parents=True, exist_ok=True)
 
     write_tool_manifest(run_dir, args.tool_allowlist)
-    write_tool_calls(run_dir, args.tool_calls)
+    write_tool_calls(run_dir, args.tool_calls, store_raw_args=args.store_raw_args)
 
     outputs, verdicts = [], []
     t0 = time.time()
@@ -189,7 +192,8 @@ def _call_digest(tool: str, cargs: dict) -> str:
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
-def write_tool_calls(run_dir: Path, calls_path: str | None):
+def write_tool_calls(run_dir: Path, calls_path: str | None,
+                     store_raw_args: bool = False):
     """Pin the OBSERVED tool calls as a run-dir evidence file.
 
     A call log is an observation, not a declaration -- the runner cannot invent
@@ -197,6 +201,13 @@ def write_tool_calls(run_dir: Path, calls_path: str | None):
     an agent harness). Accepts JSONL (one {tool, args, ...} per line) or a JSON
     array. When not given, no file is written: absent means "no call log was
     supplied for this run", which is the common case and is not an error.
+
+    SECRETS: by default the raw `args` are NOT persisted. A tool call can carry
+    tokens, message bodies, credentials or chat content, and a run dir is meant
+    to be committable evidence -- writing raw args there would leak them into git.
+    We keep the argument *keys* and a `call_digest` computed over the raw args
+    (so binding still works), but not the values. `--store-raw-args` is an
+    explicit local-debug opt-in; the record then carries `args_policy: raw`.
     """
     if not calls_path:
         return
@@ -213,21 +224,32 @@ def write_tool_calls(run_dir: Path, calls_path: str | None):
         cargs = call.get("args")
         if cargs is None and isinstance(call.get("arguments"), dict):
             cargs = call["arguments"]
-        entry = {"seq": i, "tool": tool, "args": cargs,
-                 "call_digest": _call_digest(tool, cargs)}
+        entry = {
+            "seq": i,
+            "tool": tool,
+            "arg_keys": sorted(cargs) if isinstance(cargs, dict) else [],
+            "call_digest": _call_digest(tool, cargs),
+        }
+        if store_raw_args:
+            entry["args"] = cargs
+        else:
+            entry["args_redacted"] = True
         by_tool.setdefault(tool, []).append(entry)
     record = {
         "source": str(src.resolve()),
         "n_calls": len(calls_in),
         "n_tools_called": len(by_tool),
         "tools_called": sorted(by_tool),
+        "args_policy": "raw" if store_raw_args else "digest-only",
         "calls": [e for lst in by_tool.values() for e in lst],
     }
     (run_dir / "tool_calls.json").write_text(
         json.dumps(record, sort_keys=True, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8")
     print(f"[tool-calls] recorded {len(calls_in)} call(s) over "
-          f"{len(by_tool)} tool(s) -> {run_dir / 'tool_calls.json'}")
+          f"{len(by_tool)} tool(s), args="
+          f"{'raw (--store-raw-args)' if store_raw_args else 'digest-only'} "
+          f"-> {run_dir / 'tool_calls.json'}")
 
 
 if __name__ == "__main__":

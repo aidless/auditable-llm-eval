@@ -53,6 +53,29 @@ jobs:
             --out "$RUNNER_TEMP/evolve-report.json" \
             --fail-on-proposal
 
+      # The usage gate must have teeth: a synthetic trace with an out-of-policy
+      # call must make --fail-on-usage exit non-zero. Without this, a gate that
+      # silently swallows the error would look identical to a passing one.
+      - name: Usage gate has teeth (synthetic unauthorized call)
+        run: |
+          cat > "$RUNNER_TEMP/usage-trace.json" <<'JSON'
+          {
+            "tool_identity": {"n_tools": 1, "flagged": [],
+              "tools": [{"name": "send_message", "digest": "x", "flagged": false, "rule_ids": []}]},
+            "tool_usage": {"state": "unauthorized", "n_calls": 1,
+              "tools_called": ["ghost_tool"], "unauthorized": ["ghost_tool"]},
+            "tool_binding": {"state": "verified", "mismatches": []}
+          }
+          JSON
+          if python -m agent_platform.evolve scan \
+               --trace "$RUNNER_TEMP/usage-trace.json" \
+               --out "$RUNNER_TEMP/usage-report.json" \
+               --fail-on-usage; then
+            echo "::error title=Usage gate has no teeth::--fail-on-usage exited 0 on an out-of-policy call"
+            exit 1
+          fi
+          echo "usage gate correctly exited non-zero on an out-of-policy call"
+
       - name: Upload evolve report
         if: always()
         uses: actions/upload-artifact@v4

@@ -27,6 +27,7 @@ Usage:
     agent-evolve scan --trace t.json [--trace t2.json ...] [--out report.json]
     agent-evolve scan --tools tools.json [--out report.json]
     agent-evolve scan ... --fail-on-proposal   # CI gate: exit 1 while signals exist
+    agent-evolve scan ... --fail-on-usage      # CI gate: exit 1 on out-of-policy calls
     agent-evolve --version
 """
 from __future__ import annotations
@@ -293,6 +294,9 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--out", required=True, type=Path, help="proposal report JSON to write")
     ap.add_argument("--fail-on-proposal", action="store_true",
                     help="exit 1 while any CONFIRMED candidate is untriaged (CI gate)")
+    ap.add_argument("--fail-on-usage", action="store_true",
+                    help="exit 1 when a tool was called outside the allowlist "
+                         "(usage_unauthorized); independent of rule coverage")
     ap.add_argument("--strict-review", action="store_true",
                     help="also exit 1 when unflagged tools are only in review "
                          "(off by default -- benign tools would otherwise redden the build)")
@@ -365,6 +369,10 @@ def main(argv: list[str] | None = None) -> int:
     if args.fail_on_proposal and args.strict_review and tier["review"]:
         print(f"[evolve] {len(tier['review'])} tool(s) unflagged but not yet labeled "
               "(benign or unknown) -> review, not a confirmed miss", file=sys.stderr)
+        return 1
+    if args.fail_on_usage and gap["n_usage_unauthorized"]:
+        print("[evolve] out-of-policy tool call(s) -- not in the run's allowlist: "
+              f"{gap['usage_unauthorized_tools']}", file=sys.stderr)
         return 1
     if tier["review"]:
         print(f"[evolve] note: {len(tier['review'])} unflagged tool(s) are benign/unknown "

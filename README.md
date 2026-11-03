@@ -387,6 +387,8 @@ agent-evolve scan \
 
 门禁（`--fail-on-proposal`）只对 **confirmed miss** 变红；良性默认通过，加 `--strict-review` 才对 review 也拦。`--seen` 记账本记下已分诊的工具，下次不再报。
 
+越权调用是另一条独立的门禁：`--fail-on-usage` 在 `usage_unauthorized` 非空时退出码 1。它和 `--fail-on-proposal` 可以同时用——一个管"规则覆盖是否有缺口"，一个管"agent 是否调了白名单外的工具"，两件事不能互相替代。
+
 另外两类必须与"新漏报"区分开，否则闭环会反复报同一件事：
 
 - **同名歧义**：`cases.jsonl` 里 `send_email` 同时有一条 poison 和一条 benign。按 name 分诊会把良性那条误判成漏报，所以同名冲突的名字一律降级为 review（报告里 `tier.ambiguous_labels`），永远不能被确认为漏报。
