@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "auditable-llm-eval"
-version = "1.0.0"
+version = "1.1.0"
 description = "Auditable LLM evaluation pipeline: verifier separate from scorer, programmatic reference checks, documented rollback"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -26,7 +26,9 @@ dependencies = []
 [project.scripts]
 auditable-eval-score = "copilot.score_copilot_run_v2:main"
 auditable-eval-verify = "verify_copilot_run:main"
+agent-trace = "agent_platform.trace:main"
+agent-evolve = "agent_platform.evolve:main"
 
 [tool.setuptools]
-packages = ["copilot"]
+packages = ["copilot", "agent_platform"]
 py-modules = ["verify_copilot_run"]

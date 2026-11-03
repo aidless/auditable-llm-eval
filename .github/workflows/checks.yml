@@ -15,3 +15,22 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - run: python -m pip install pytest
       - run: python -m pytest tests -q
+
+  # Self-evolution loop (agent_platform/evolve.py). The test suite locks the
+  # triage invariants -- benign tools stay in review, labeled poison that fired
+  # no rule is a confirmed miss -> candidate, --fail-on-proposal reddens only on
+  # confirmed misses, --seen ledger closes them. Running these in CI proves the
+  # loop logic is intact. The full cross-repo gate needs an mcp-guard checkout
+  # (labels come from cases.jsonl), so it is exercised by tests rather than a
+  # live scan step here.
+  evolve-tests:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install pytest
+      - run: python -m pytest tests/test_agent_evolve.py -q
