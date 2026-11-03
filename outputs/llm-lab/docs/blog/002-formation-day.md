@@ -12,7 +12,7 @@
 
 ## 1. Where we started
 
-At 21:30 on 2026-07-13, the repo `F:\test\2026-07-12-00-12-06` was a loose pile of scripts: a 3B QLoRA training pipeline (M0–M3), a draft scorer with 10 `reference_check` types, a discipline verifier, two committed runs (`v3c` at 69.00%, `v3` at 67.00%), and a chunk of root-level planning docs (`COPILOT_RETROSPECTIVE.md`, `EXECUTION_PLAN.md`, etc.). The headline numbers were reproducible, but the discipline layer was **decorative** — no enforced gate, no audit log, no contract between code and check semantics.
+At 21:30 on 2026-07-13, the repo `F:\test\2026-07-12-00-12-06` was a loose pile of scripts: a 3B QLoRA training pipeline (M0–M3), a draft scorer with 10 `reference_check` types, a discipline verifier, two committed runs (`v3c` at 69.00%, `v3` at 67.00%), and a chunk of root-level planning docs (`docs/plans/COPILOT_RETROSPECTIVE.md`, `docs/plans/EXECUTION_PLAN.md`, etc.). The headline numbers were reproducible, but the discipline layer was **decorative** — no enforced gate, no audit log, no contract between code and check semantics.
 
 We had 23 hours of session time behind us and were at the edge of context. The user asked for **two things**:
 

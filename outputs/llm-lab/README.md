@@ -55,7 +55,7 @@
 
 ## 实证分数链（同口径）
 
-`COPILOT_RETROSPECTIVE.md`（评测平台复盘，分数链至 v2）为实证来源；完整修复链见博客 §。
+`docs/plans/COPILOT_RETROSPECTIVE.md`（评测平台复盘，分数链至 v2）为实证来源；完整修复链见博客 §。
 
 > ✅ 下表分数为**本仓库提交 run 的可复现结果**（由 `verify_copilot_run.py` 从磁盘算出，全 PASS）。两个模型在 naive 实时验证器眼里都是 100% 绿，但权威 scorer 只给 ~2/3。
 
@@ -72,6 +72,6 @@
 
 ## 与其他文档的关系
 
-本子项目的文档由根 `README.md` §10 入口可达。根工程（TMLR 微调）的 ADR 与博客均位于本 `docs/` 目录；实证原始记录见根目录 `COPILOT_RETROSPECTIVE.md` 与 `COPILOT_NEXT_STEPS.md`。
+本子项目的文档由根 `README.md` §10 入口可达。根工程（TMLR 微调）的 ADR 与博客均位于本 `docs/` 目录；实证原始记录见根目录 `docs/plans/COPILOT_RETROSPECTIVE.md` 与 `docs/plans/COPILOT_NEXT_STEPS.md`。
 
 *文档状态（2026-07-13）：本 `docs/` 为重建落盘版本（此前因会话断连丢失），均以真实代码理念与**已提交、可复现的 run**（v3c 69.00% / v3 67.00%）为依据；更早会话日志里的 77.69%/7.59% 弧线未被提交 run 复现、已降级为动机（见上方状态框）。*

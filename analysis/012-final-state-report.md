@@ -143,10 +143,10 @@ aidless/auditable-llm-eval  (89 files, 14 commits, ~300 KB)
 │   └── train_seed_200_aug.jsonl          (gitignored, but in zip)
 │
 └── (other root planning docs preserved for context)
-    ├── COPILOT_RETROSPECTIVE.md          source-doc appendix of CHANGELOG
-    ├── EXECUTION_PLAN.md
-    ├── M2_CONFIG_REVIEW.md
-    ├── NEXT_STEPS_PLAN.md
+    ├── docs/plans/COPILOT_RETROSPECTIVE.md  source-doc appendix of CHANGELOG
+    ├── docs/plans/EXECUTION_PLAN.md
+    ├── docs/plans/M2_CONFIG_REVIEW.md
+    ├── docs/plans/NEXT_STEPS_PLAN.md
     ├── RUN_GUIDE.md
     ├── RUN_LOG.md
     ├── TRAINING_TROUBLESHOOTING.md
@@ -180,7 +180,7 @@ This is now in `CONTRIBUTING.md` § Confidence-phrasing rules AND in `~/.workbud
 | # | open item | why it's open | next step |
 |---|---|---|---|
 | 1 | GitHub Actions 6-job matrix has not yet been observed live (only simulated locally — analysis/008 + this report §4) | this env has no token; the push that triggered the matrix landed at `f51a19e` but the user has not yet screenshotted the Actions page | user to screenshot the 6 jobs; if any fail, write analysis/013+ with the failure mode and iterate |
-| 2 | `tmp/` 200 Python scripts and ~30 root-level planning docs (COPILOT_RETROSPECTIVE etc.) are not yet organized into the spec-first structure | 30-day deferral; not blocking release | future cleanup session |
+| 2 | `tmp/` 200 Python scripts and ~30 planning docs (COPILOT_RETROSPECTIVE etc., since moved to docs/plans/) are not yet organized into the spec-first structure | 30-day deferral; not blocking release | future cleanup session |
 | 3 | GitHub repo About description + topics not set | this env has no token | user to set via Settings → General |
 | 4 | GitHub Release v1.0.0 not yet created with `llm-lab-opensource.zip` attached | this env has no token | user to Draft a new release using `RELEASE_NOTES_v1.0.md` body |
 | 5 | `validate_release.py` does not yet have a `--strict` mode that treats WARN as FAIL | useful for future tightening, not necessary now | add when the matrix has been observed to behave as expected |

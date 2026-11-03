@@ -112,7 +112,7 @@ pip install "trl>=0.9" "transformers>=4.45" "datasets" "accelerate" \
 **关键纪律：**
 - **不编造审稿观点**——`convert_reviews.py` 只做转格式+清洗截断，不生成评价内容；`review_corpus_TEMPLATE.jsonl` 仅为格式示例，**必须替换为真实语料**，否则模型会学到示例噪声。
 - 审稿语料通常量小，第二轮建议降 `learning_rate`（易过拟合），或对新数据用**独立 LoRA 适配器**避免冲刷首轮领域能力。
-- **落地顺序**：先路径 A 跑通 M0→M3 拿领域专家基线，基线达标后再用路径 B 做第二轮。详见 `M2_CONFIG_REVIEW.md` §3。
+- **落地顺序**：先路径 A 跑通 M0→M3 拿领域专家基线，基线达标后再用路径 B 做第二轮。详见 `docs/plans/M2_CONFIG_REVIEW.md` §3。
 
 **启动命令：**
 ```bash
@@ -160,7 +160,7 @@ training_args = {
 }
 ```
 
-> **注（3060 实测，2026-07-12）**：`train_lora.py` 的 `env_check` 阈值为 6.5GB，RTX 3060（6.0GB）会进入 low 档并**默认降为 `batch=2 / seq=2048`**（安全优先，零 OOM 风险）。若 `nvidia-smi` 显示峰值显存 < 5.0GB，可显式 `--batch 4 --seq-len 4096` 覆盖以恢复"舒适区"吞吐；OOM 即回退。详见 `M2_CONFIG_REVIEW.md`。
+> **注（3060 实测，2026-07-12）**：`train_lora.py` 的 `env_check` 阈值为 6.5GB，RTX 3060（6.0GB）会进入 low 档并**默认降为 `batch=2 / seq=2048`**（安全优先，零 OOM 风险）。若 `nvidia-smi` 显示峰值显存 < 5.0GB，可显式 `--batch 4 --seq-len 4096` 覆盖以恢复"舒适区"吞吐；OOM 即回退。详见 `docs/plans/M2_CONFIG_REVIEW.md`。
 
 ---
 

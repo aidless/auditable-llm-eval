@@ -100,7 +100,7 @@ auditable-eval-score --selftest
 ├── requirements_win3060.txt        # 3060 Windows 训练环境依赖
 ├── qwen25-3b-tmlr-finetune-plan.md # 方案文档（含 §2.4 审稿偏好数据来源与格式）
 ├── RUN_GUIDE.md                    # M0→M3 运行监控清单 + 预期输出表格
-├── M2_CONFIG_REVIEW.md             # M2 超参审计 + "审稿偏好"路径定位
+├── docs/plans/M2_CONFIG_REVIEW.md  # M2 超参审计 + "审稿偏好"路径定位
 ├── run_all.py                      # M0→M3 一键编排器
 ├── data/
 │   ├── build_dataset.py            # arXiv 抽象级抓取 + 通用混入
@@ -208,7 +208,7 @@ python run_all.py --papers 200 --manuscript "你的稿件.tex" --reviews "review
 
 - `qwen25-3b-tmlr-finetune-plan.md` — 完整方案（环境/数据/训练/评估/里程碑/风险）
 - `RUN_GUIDE.md` — M0→M3 运行监控清单、预期控制台输出、失败处置表
-- `M2_CONFIG_REVIEW.md` — M2 超参审计 + "审稿偏好"三条路径（A 基线 / B 数据轨 / C 换模板）定位
+- `docs/plans/M2_CONFIG_REVIEW.md` — M2 超参审计 + "审稿偏好"三条路径（A 基线 / B 数据轨 / C 换模板）定位
 - `TRAINING_TROUBLESHOOTING.md` — 3060 训练排错速查（显存预算 / OOM 处置 / 升档降档决策树 / 监控命令）
 
 ---
@@ -232,8 +232,8 @@ python run_all.py --papers 200 --manuscript "你的稿件.tex" --reviews "review
 - [`docs/blog/001-auditable-llm-eval-no-green-lights.md`](outputs/llm-lab/docs/blog/001-auditable-llm-eval-no-green-lights.md) — *Auditable LLM Eval: No Green Lights*（HN 向；以 v3 假绿→v3c 修复为实证链。注：77.69% 为早期 verifier 口径，权威 scorer 复测 69.00%，见 analysis/003）
 
 **实证数据权威源**
-- `COPILOT_RETROSPECTIVE.md` — 评测平台复盘（分数链至 v2）
-- `COPILOT_NEXT_STEPS.md` — 评测修复路线图
+- `docs/plans/COPILOT_RETROSPECTIVE.md` — 评测平台复盘（分数链至 v2）
+- `docs/plans/COPILOT_NEXT_STEPS.md` — 评测修复路线图
 
 ---
 
