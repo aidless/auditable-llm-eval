@@ -47,6 +47,18 @@ class TestTierClassification(unittest.TestCase):
         sig = {"signal": "tool_unflagged", "tool": "send_message", "called": False}
         self.assertEqual(evolve._tier(sig, poison), "confirmed")
 
+    def test_ambiguous_name_is_never_confirmed(self):
+        # cases.jsonl uses `send_email` for both a poison and a benign tool.
+        poison = {"send_email"}
+        sig = {"signal": "tool_unflagged", "tool": "send_email", "called": False}
+        self.assertEqual(evolve._tier(sig, poison, ambiguous={"send_email"}), "review")
+
+    def test_declared_boundary_is_not_a_new_miss(self):
+        poison = {"run_cmd"}
+        sig = {"signal": "tool_unflagged", "tool": "run_cmd", "called": False}
+        self.assertEqual(
+            evolve._tier(sig, poison, boundaries={"run_cmd"}), "known_boundary")
+
     def test_confirmed_signal_set_matches_two_tier_design(self):
         self.assertEqual(
             evolve.CONFIRMED_SIGNALS,
@@ -103,6 +115,24 @@ class TestBuildReport(unittest.TestCase):
         self.assertEqual(gap["candidates"], [])
         self.assertEqual(report["tier"]["review"], [])  # not described as benign
 
+    def test_ambiguous_tool_reports_as_ambiguous_not_confirmed(self):
+        report = evolve.build_report(
+            [{"signal": "tool_unflagged", "tool": "send_email", "called": False,
+              "evidence": {}}],
+            "tools.json", poison={"send_email"}, ambiguous={"send_email"})
+        self.assertEqual(report["tier"]["confirmed_misses"], [])
+        self.assertEqual(report["tier"]["ambiguous_labels"], ["send_email"])
+        self.assertEqual(report["rule_coverage_gap"]["candidates"], [])
+
+    def test_boundary_tool_reports_as_boundary_not_confirmed(self):
+        report = evolve.build_report(
+            [{"signal": "tool_unflagged", "tool": "run_cmd", "called": False,
+              "evidence": {}}],
+            "tools.json", poison={"run_cmd"}, boundaries={"run_cmd"})
+        self.assertEqual(report["tier"]["confirmed_misses"], [])
+        self.assertEqual(report["tier"]["known_boundaries"], ["run_cmd"])
+        self.assertEqual(report["rule_coverage_gap"]["candidates"], [])
+
 
 @has_guard
 class TestGates(unittest.TestCase):
@@ -154,6 +184,31 @@ class TestGates(unittest.TestCase):
                 self._scan(Path(d) / "r1.json", tools=tools, fail=True, seen=ledger), 1)
             self.assertEqual(
                 self._scan(Path(d) / "r2.json", tools=tools, fail=True, seen=ledger), 0)
+
+    def test_crossrepo_gate_green_on_committed_cases(self):
+        tools = REPO.parent / "mcp-guard" / "tasks" / "cases.jsonl"
+        with __import__("tempfile").TemporaryDirectory() as d:
+            rc = self._scan(Path(d) / "r.json", tools=tools, fail=True)
+        self.assertEqual(rc, 0)
+
+    def test_crossrepo_gate_reddens_on_a_new_miss(self):
+        # Build a temp mcp-guard-like repo whose cases.jsonl gains a NEW poison
+        # that fires no rule. The gate must redden -- that is its whole purpose.
+        import shutil
+        with __import__("tempfile").TemporaryDirectory() as d:
+            fake_repo = Path(d) / "mcp-guard"
+            shutil.copytree(REPO.parent / "mcp-guard" / "guard", fake_repo / "guard")
+            (fake_repo / "tasks").mkdir(parents=True)
+            new_case = {"name": "new_ghost", "description": "Do something harmless.",
+                        "inputSchema": {"type": "object", "properties": {}},
+                        "label": "poison", "gold_rules": ["imperative-tag"]}
+            cases = fake_repo / "tasks" / "cases.jsonl"
+            cases.write_text(json.dumps(new_case), encoding="utf-8")
+            rc = evolve.main(["scan", "--tools", str(cases),
+                              "--mcp-guard-repo", str(fake_repo),
+                              "--out", str(Path(d) / "r.json"),
+                              "--fail-on-proposal"])
+        self.assertEqual(rc, 1)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,62 @@
+name: evolve-crossrepo
+
+# Cross-repo self-evolution gate. This is the only job that can see BOTH repos:
+# labels come from mcp-guard's tasks/cases.jsonl, so a confirmed miss can only
+# be identified here. The gate reddens when a tool that mcp-guard labels poison
+# fires no rule and is not declared in tasks/known_boundaries.json.
+#
+# Honest scope: mcp-guard is checked out at its default branch, so this job
+# tracks that branch rather than a pinned SHA. If mcp-guard's main moves, the
+# gate measures the moved tree -- which is the intent (continuous learning),
+# but it also means a red here can come from a change in the other repo.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  cross-repo-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/checkout@v4
+        with:
+          repository: aidless/mcp-guard
+          path: mcp-guard
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: python -m pip install pytest
+
+      - name: Self-evolution tests
+        run: python -m pytest tests/test_agent_evolve.py -q
+
+      - name: Cross-repo coverage gate
+        run: |
+          python -m agent_platform.evolve scan \
+            --tools mcp-guard/tasks/cases.jsonl \
+            --mcp-guard-repo mcp-guard \
+            --out "$RUNNER_TEMP/evolve-report.json" \
+            --fail-on-proposal
+
+      - name: Upload evolve report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: evolve-report
+          path: ${{ runner.temp }}/evolve-report.json
+          if-no-files-found: warn

@@ -260,6 +260,12 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--mcp-guard-repo", default=default_mcp, type=Path,
                     help="mcp-guard checkout (or set MCP_GUARD_REPO)")
     ap.add_argument("--out", required=True, type=Path, help="trace JSON to write")
+    ap.add_argument("--fail-on", choices=["none", "unauthorized", "mismatch", "any"],
+                    default="none",
+                    help="blocking semantics after the trace is written: exit 1 on "
+                         "an out-of-policy call (unauthorized), a rug-pull-shaped "
+                         "definition drift (mismatch), or either (any). Default none: "
+                         "record the evidence, do not block.")
     args = ap.parse_args(argv)
 
     if not args.mcp_guard_repo:
@@ -281,6 +287,22 @@ def main(argv: list[str] | None = None) -> int:
         "overall_reference_check_rate": audit["overall_reference_check_rate"],
         "out": str(args.out),
     }, ensure_ascii=False))
+
+    problems = []
+    if usage["state"] == "unauthorized":
+        problems.append("unauthorized:" + ",".join(usage["unauthorized"]))
+    if binding["state"] == "mismatch":
+        problems.append("mismatch:" + ",".join(m["name"] for m in binding["mismatches"]))
+    triggered = {
+        "none": False,
+        "unauthorized": usage["state"] == "unauthorized",
+        "mismatch": binding["state"] == "mismatch",
+        "any": bool(problems),
+    }[args.fail_on]
+    if triggered:
+        print("[agent-trace] BLOCK (" + args.fail_on + "): " + "; ".join(problems),
+              file=sys.stderr)
+        return 1
     return 0
 
 

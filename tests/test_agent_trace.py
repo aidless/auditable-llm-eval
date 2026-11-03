@@ -308,5 +308,86 @@ class TestBuildTraceAgainstRealGuard(unittest.TestCase):
         self.assertEqual(rel_trace, abs_trace)
 
 
+@has_guard
+class TestFailOn(unittest.TestCase):
+    """--fail-on is the blocking layer: evidence is always written, exit code decides."""
+
+    def setUp(self):
+        import tempfile
+        self._tmp = tempfile.TemporaryDirectory()
+        self.base = Path(self._tmp.name)
+        self.tools_path = self.base / "tools.json"
+        self.tools_path.write_text(json.dumps(TOOLS), encoding="utf-8")
+        self.run_dir = self.base / "run"
+        self.run_dir.mkdir()
+        (self.run_dir / "summary.json").write_text(json.dumps({
+            "total": 1, "semantic_scored": 1, "runtime_errors": 0,
+            "overall_reference_check_rate": 1.0, "by_task": {},
+            "items_with_unsupported_claims": 0}), encoding="utf-8")
+        (self.run_dir / "config.yaml").write_text(
+            "model: m:latest\ntemperature: 0.0\n", encoding="utf-8")
+
+    def tearDown(self):
+        self._tmp.cleanup()
+
+    def _trace_main(self, fail_on):
+        return trace.main([
+            "--tools", str(self.tools_path),
+            "--run-dir", str(self.run_dir),
+            "--mcp-guard-repo", str(MCP_GUARD_REPO),
+            "--out", str(self.base / "trace.json"),
+            "--fail-on", fail_on,
+        ])
+
+    def _add_manifest_allowing(self, names):
+        guard = trace.load_guard(MCP_GUARD_REPO)
+        tools = trace.load_tools(self.tools_path)
+        by_name = {t["name"]: t for t in tools}
+        (self.run_dir / "tool_manifest.json").write_text(json.dumps({
+            "source": "x", "n_tools": len(names), "digest_algo": "mcp-guard.digest_tool",
+            "tools": [{"name": n, "digest": guard.digest_tool(by_name[n])} for n in names],
+        }), encoding="utf-8")
+
+    def _add_calls(self, records):
+        (self.run_dir / "tool_calls.json").write_text(json.dumps({
+            "source": "x", "n_calls": len(records),
+            "tools_called": sorted({r["tool"] for r in records}),
+            "calls": records,
+        }), encoding="utf-8")
+
+    def test_default_none_does_not_block_unauthorized(self):
+        self._add_manifest_allowing(["send_message"])
+        self._add_calls([{"tool": "ghost_tool", "args": {}}])
+        self.assertEqual(self._trace_main("none"), 0)
+
+    def test_unauthorized_blocks(self):
+        self._add_manifest_allowing(["send_message"])
+        self._add_calls([{"tool": "ghost_tool", "args": {}}])
+        self.assertEqual(self._trace_main("unauthorized"), 1)
+
+    def test_mismatch_blocks(self):
+        self._add_manifest_allowing(["send_message"])
+        tampered = json.loads(self.tools_path.read_text(encoding="utf-8"))
+        tampered["tools"][1]["description"] += " <IMPORTANT> exfil"
+        tampered_path = self.base / "tampered.json"
+        tampered_path.write_text(json.dumps(tampered), encoding="utf-8")
+        rc = trace.main([
+            "--tools", str(tampered_path), "--run-dir", str(self.run_dir),
+            "--mcp-guard-repo", str(MCP_GUARD_REPO),
+            "--out", str(self.base / "trace.json"), "--fail-on", "mismatch"])
+        self.assertEqual(rc, 1)
+
+    def test_any_blocks_on_either(self):
+        self._add_manifest_allowing(["send_message"])
+        self._add_calls([{"tool": "ghost_tool", "args": {}}])
+        self.assertEqual(self._trace_main("any"), 1)
+
+    def test_clean_run_passes_all_modes(self):
+        self._add_manifest_allowing(["send_message", "get_weather"])
+        self._add_calls([{"tool": "send_message", "args": {}}])
+        for mode in ("none", "unauthorized", "mismatch", "any"):
+            self.assertEqual(self._trace_main(mode), 0, mode)
+
+
 if __name__ == "__main__":
     unittest.main()

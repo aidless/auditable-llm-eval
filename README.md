@@ -251,6 +251,25 @@ python run_all.py --papers 200 --manuscript "你的稿件.tex" --reviews "review
 | 输出审计（AFTER） | 这个 agent **这次跑得对不对、可不可复算**——scorer 重跑 + 纪律校验 | 本仓 `verify_copilot_run.py` | 已发布 |
 | Trace 胶水层 | 把**工具 digest** 与**审计分数**绑成一份带 sha256 的 JSON trace | 本仓 `agent_platform/trace.py` | 骨架 + 工具绑定（第一周增量） |
 
+```mermaid
+flowchart LR
+    A[工具定义 JSON] --> B[mcp-guard<br/>扫毒 + digest 钉选]
+    B --> C[tool_manifest.json<br/>本次允许用哪些工具]
+    D[实际调用日志] --> E[tool_calls.json<br/>本次实际调用哪些工具]
+    F[run 目录] --> G[scorer 重跑<br/>+ verifier 纪律校验]
+    C --> H[agent-trace]
+    E --> H
+    G --> H
+    H --> I[trace JSON<br/>trace_sha256]
+    I --> J{--fail-on}
+    J -->|unauthorized / mismatch| K[exit 1 阻断]
+    J -->|none 或干净| L[exit 0 放行]
+    I --> M[agent-evolve]
+    M --> N{新 confirmed miss?}
+    N -->|是| O[候选案例 + 规则缺口报告]
+    N -->|否| P[已知边界 / review]
+```
+
 三层职责边界（避免把设计当已实现）：
 
 - **BEFORE 是词法规则，不是模型。** `mcp-guard` 只能说"已知模式可被词法覆盖、且覆盖边界可被精确说出"，不声明通用检出率。生产当第一层过滤 + 人工复核，不是裁决器。
@@ -326,6 +345,24 @@ trace 把 `tool_calls` 与 `tool_manifest` 对表，产出 `tool_usage`：
 
 这一层才真正回答"**agent 有没有调用它不被允许用的工具**"——allowlist 对表能抓 rug-pull，call log 对表能抓越权调用，两者缺一不可。
 
+### 阻断语义（`--fail-on`）
+
+trace 默认只记录、不阻断。需要实时拦截时用 `--fail-on`：
+
+| 取值 | 何时退出码 1 | 用途 |
+|---|---|---|
+| `none`（默认） | 永不 | 纯取证 / 离线审计 |
+| `unauthorized` | `tool_usage.state == unauthorized` | 越权调用即阻断 |
+| `mismatch` | `tool_binding.state == mismatch` | 工具定义被换掉（rug-pull）即阻断 |
+| `any` | 上述任一 | agent 启动前体检 / CI 门禁 |
+
+```bash
+agent-trace --tools tools.json --run-dir RUN \
+  --mcp-guard-repo ../mcp-guard --out trace.json --fail-on any
+```
+
+**证据先落盘，再判退出码**：即使 `--fail-on` 阻断，`trace.json` 也已经写完，方便事后复盘"为什么被拦"。
+
 ### 自进化闭环（`agent-evolve`）
 
 前三层只**报告**，不学习。`agent_platform/evolve.py` 补上"从观测到改进"的闭环：
@@ -349,6 +386,15 @@ agent-evolve scan \
 **两档分诊是防噪声的关键**：只有"已标注 poison 但没命中"才算 confirmed miss，良性工具（如 `get_weather`）永远落在 review、不进候选——否则每个干净工具都会被误报成"规则缺口"。
 
 门禁（`--fail-on-proposal`）只对 **confirmed miss** 变红；良性默认通过，加 `--strict-review` 才对 review 也拦。`--seen` 记账本记下已分诊的工具，下次不再报。
+
+另外两类必须与"新漏报"区分开，否则闭环会反复报同一件事：
+
+- **同名歧义**：`cases.jsonl` 里 `send_email` 同时有一条 poison 和一条 benign。按 name 分诊会把良性那条误判成漏报，所以同名冲突的名字一律降级为 review（报告里 `tier.ambiguous_labels`），永远不能被确认为漏报。
+- **已知方法边界**：`run_cmd` 这类"纯描述、无词法痕迹"的 poison，是**已确认但不可用词法修**的边界，写在 mcp-guard 的 `tasks/known_boundaries.json` 里。门禁把它们归为 `tier.known_boundaries`，不红；只有**不在**边界清单里的新 missed 才会红。
+
+**真实战果**：用这套闭环跑 mcp-guard 的 30 条案例，它认出 4 条 confirmed miss（`summarize`、`adv_paraphrase_populate`、`adv_paraphrase_copy`、`adv_indirect_bcc`）。补完规则后 `recall_case` 0.7368 → **0.9474**、`recall_rule` 0.7083 → **0.875**，`fpr_benign` 仍 0.0。这不是"设计能学习"，是已经跑过一次的学习。
+
+**跨仓门禁**：`.github/workflows/evolve-crossrepo.yml` 同时 checkout 本仓与 `aidless/mcp-guard`，对 `cases.jsonl` 全量跑 `agent-evolve --fail-on-proposal`。有 mcp-guard 时才有标签、才认得出 confirmed miss——这是唯一能持续抓漏的 CI 任务；`evolve-tests` 只锁分诊不变量。
 
 **候选案例与 mcp-guard 的 `cases.jsonl` schema 对齐**（`name`/`description`/`inputSchema`/`label`/`gold_rules` + 一个 `proposal` 溯源块），`description` 留 `PENDING HUMAN WRITE`——**补案例、选规则族、定 `gold_rules` 必须人来写**。下一步是把它接进 `cases.jsonl` → 必要时扩规则 → 跑 `measure_rule_ablation.py --check` 重算 README 数字。
 

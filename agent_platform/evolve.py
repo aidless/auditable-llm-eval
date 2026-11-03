@@ -81,30 +81,61 @@ CONFIRMED_SIGNALS = ("called_tool_unflagged", "tool_unflagged")
 REVIEW_SIGNALS = ("usage_unauthorized", "binding_mismatch")
 
 
-def load_labels(mcp_guard_repo: Path) -> tuple[set[str], set[str]]:
-    """(poison_names, benign_names) from mcp-guard's labeled cases, if present.
+def load_labels(mcp_guard_repo: Path) -> tuple[set[str], set[str], set[str]]:
+    """(poison_names, benign_names, ambiguous_names) from cases.jsonl.
 
     Reads tasks/cases.jsonl read-only. Missing file -> empty sets, which degrades
     every unflagged tool to "unseen" (review, not confirmed) rather than guessing.
+
+    `ambiguous` is the set of names that appear with BOTH labels. mcp-guard's
+    case file uses `send_email` for one poison and one benign tool, so a
+    name-based lookup would call the benign one a confirmed miss. Ambiguous
+    names are therefore never promotable to confirmed; they stay in review.
     """
     cases = Path(mcp_guard_repo).resolve() / "tasks" / "cases.jsonl"
     poison: set[str] = set()
     benign: set[str] = set()
     if not cases.exists():
-        return poison, benign
+        return poison, benign, set()
     for line in cases.read_text(encoding="utf-8").splitlines():
         if not line.strip():
             continue
         row = json.loads(line)
         (poison if row.get("label") == "poison" else benign).add(row.get("name", "?"))
-    return poison, benign
+    return poison, benign, poison & benign
 
 
-def _tier(sig: dict, poison: set[str]) -> str:
-    """confirmed = a known-labeled poison tool that fired no rule (a real miss)."""
-    if sig["tool"] in poison and sig["signal"] in CONFIRMED_SIGNALS:
+def _tier(sig: dict, poison: set[str], ambiguous: set[str] | None = None,
+          boundaries: set[str] | None = None) -> str:
+    """confirmed = a known-labeled poison tool that fired no rule (a real miss).
+
+    Names with conflicting labels (`ambiguous`) can never be confirmed by name
+    alone -- that would turn the benign `send_email` into a false miss.
+
+    `boundaries` are poison cases the repo has explicitly declared lexically
+    uncatchable (documented in mcp-guard/tasks/known_boundaries.json). They are
+    real misses but known-and-accepted ones; the gate must not re-redden on them
+    forever, or CI would be permanently red and stop meaning anything.
+    """
+    ambiguous = ambiguous or set()
+    boundaries = boundaries or set()
+    if sig["tool"] in boundaries and sig["tool"] in poison:
+        return "known_boundary"
+    if (sig["tool"] in poison and sig["tool"] not in ambiguous
+            and sig["signal"] in CONFIRMED_SIGNALS):
         return "confirmed"
     return "review"
+
+
+def load_boundaries(mcp_guard_repo: Path) -> set[str]:
+    """Poison names the repo has accepted as lexical boundaries (read-only)."""
+    path = Path(mcp_guard_repo).resolve() / "tasks" / "known_boundaries.json"
+    if not path.exists():
+        return set()
+    doc = json.loads(path.read_text(encoding="utf-8"))
+    if isinstance(doc, dict):
+        doc = doc.get("boundaries", [])
+    return {entry.get("name") if isinstance(entry, dict) else entry for entry in doc}
 
 
 def _load_input(path: Path) -> dict:
@@ -112,6 +143,22 @@ def _load_input(path: Path) -> dict:
     if "trace_sha256" in data and "trace" in data:  # finalized trace
         return data["trace"]
     return data  # already a trace body, or a tools file -- caller disambiguates
+
+
+def load_tools(path: Path) -> list[dict]:
+    """Accept a tool list as JSONL (one tool per line), a JSON array, or
+    ``{"tools": [...]}``. JSONL matters here: mcp-guard's own cases.jsonl is
+    JSONL, so pointing --tools straight at it (the most natural input for the
+    cross-repo gate) must just work instead of crashing on "Extra data".
+    """
+    raw = path.read_text(encoding="utf-8")
+    try:
+        data = json.loads(raw)
+    except json.JSONDecodeError:
+        data = [json.loads(line) for line in raw.splitlines() if line.strip()]
+    if isinstance(data, dict):
+        data = data.get("tools", [data])
+    return data
 
 
 def signals_from_trace(trace: dict) -> list[dict]:
@@ -186,11 +233,13 @@ def make_candidate(sig: dict, tools_path: str) -> dict:
 
 
 def build_report(signals: list[dict], tools_path: str, poison: set[str],
-                 seen: set[str] | None = None) -> dict:
+                 seen: set[str] | None = None,
+                 ambiguous: set[str] | None = None,
+                 boundaries: set[str] | None = None) -> dict:
     seen = seen or set()
     new = [s for s in signals if s["tool"] not in seen]
     for s in new:
-        s["tier"] = _tier(s, poison)
+        s["tier"] = _tier(s, poison, ambiguous, boundaries)
     # Only CONFIRMED misses become actionable candidates; everything else is
     # routed to review so benign tools never masquerade as rule gaps.
     candidates = [make_candidate(s, tools_path) for s in new if s["tier"] == "confirmed"]
@@ -211,6 +260,9 @@ def build_report(signals: list[dict], tools_path: str, poison: set[str],
             "confirmed_misses": sorted({s["tool"] for s in new if s["tier"] == "confirmed"}),
             "review": review,
             "n_review_benign_or_unknown": len(review),
+            "ambiguous_labels": sorted((ambiguous or set()) & {s["tool"] for s in new}),
+            "known_boundaries": sorted({s["tool"] for s in new
+                                        if s["tier"] == "known_boundary"}),
         },
         "rule_coverage_gap": {
             "n_tools_unflagged": sum(1 for s in new
@@ -253,8 +305,11 @@ def main(argv: list[str] | None = None) -> int:
     guard = None
     poison: set[str] = set()
     benign: set[str] = set()
+    ambiguous: set[str] = set()
+    boundaries: set[str] = set()
     if args.mcp_guard_repo:
-        poison, benign = load_labels(args.mcp_guard_repo)
+        poison, benign, ambiguous = load_labels(args.mcp_guard_repo)
+        boundaries = load_boundaries(args.mcp_guard_repo)
 
     signals: list[dict] = []
     tools_path = ""
@@ -263,8 +318,7 @@ def main(argv: list[str] | None = None) -> int:
             if not args.mcp_guard_repo:
                 ap.error("--tools needs --mcp-guard-repo (or set MCP_GUARD_REPO)")
             guard = load_guard(args.mcp_guard_repo)
-        raw = json.loads(args.tools.read_text(encoding="utf-8"))
-        tools = raw.get("tools", [raw]) if isinstance(raw, dict) else raw
+        tools = load_tools(args.tools)
         tools_path = str(Path(args.tools).resolve())
         signals.extend(signals_from_tools(tools, guard))
     for tp in args.trace:
@@ -278,7 +332,7 @@ def main(argv: list[str] | None = None) -> int:
     seen: set[str] = set()
     if args.seen and args.seen.exists():
         seen = set(json.loads(args.seen.read_text(encoding="utf-8")).get("seen", []))
-    report = build_report(signals, tools_path, poison, seen)
+    report = build_report(signals, tools_path, poison, seen, ambiguous, boundaries)
     if args.seen:
         args.seen.parent.mkdir(parents=True, exist_ok=True)
         args.seen.write_text(json.dumps(
@@ -294,6 +348,7 @@ def main(argv: list[str] | None = None) -> int:
         "n_signals": report["n_signals"],
         "n_seen_suppressed": report["n_seen_suppressed"],
         "confirmed_misses": tier["confirmed_misses"],
+        "known_boundaries": tier["known_boundaries"],
         "n_review": len(tier["review"]),
         "n_candidates": len(gap["candidates"]),
         "n_called_but_unflagged": gap["n_called_but_unflagged"],
