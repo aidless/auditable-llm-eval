@@ -113,8 +113,8 @@ auditable-eval-score --selftest
 ├── README.md                       # 本文件
 ├── pyproject.toml                  # 评测腿的最小打包配置（零运行时依赖）
 ├── requirements_win3060.txt        # 3060 Windows 训练环境依赖
-├── qwen25-3b-tmlr-finetune-plan.md # 方案文档（含 §2.4 审稿偏好数据来源与格式）
 ├── RUN_GUIDE.md                    # M0→M3 运行监控清单 + 预期输出表格
+├── docs/history/                   # 已完成的过程文档与一次性训练脚本（只归档，不删）
 ├── docs/plans/M2_CONFIG_REVIEW.md  # M2 超参审计 + "审稿偏好"路径定位
 ├── run_all.py                      # M0→M3 一键编排器
 ├── data/
@@ -221,10 +221,10 @@ python run_all.py --papers 200 --manuscript "你的稿件.tex" --reviews "review
 
 ## 9. 参考文档
 
-- `qwen25-3b-tmlr-finetune-plan.md` — 完整方案（环境/数据/训练/评估/里程碑/风险）
+- [`docs/history/qwen25-3b-tmlr-finetune-plan.md`](./docs/history/qwen25-3b-tmlr-finetune-plan.md) — 完整方案（环境/数据/训练/评估/里程碑/风险）
 - `RUN_GUIDE.md` — M0→M3 运行监控清单、预期控制台输出、失败处置表
 - `docs/plans/M2_CONFIG_REVIEW.md` — M2 超参审计 + "审稿偏好"三条路径（A 基线 / B 数据轨 / C 换模板）定位
-- `TRAINING_TROUBLESHOOTING.md` — 3060 训练排错速查（显存预算 / OOM 处置 / 升档降档决策树 / 监控命令）
+- [`docs/history/TRAINING_TROUBLESHOOTING.md`](./docs/history/TRAINING_TROUBLESHOOTING.md) — 3060 训练排错速查（显存预算 / OOM 处置 / 升档降档决策树 / 监控命令）
 
 ---
 
