@@ -5,12 +5,17 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 [![Python ≥ 3.10](https://img.shields.io/badge/python-≥3.10-blue.svg)]()
 
-> **TL;DR.** An auditable LLM evaluation pipeline (10 programmatic `reference_checks`,
-> including *cognitive-honesty* dimensions) that catches false-green verdicts.
-> **One dataset, two judges, 100 committed answers:** the naive checker returns
-> **100/100 green**; the authoritative scorer returns **0.6900** and **0.6700**
-> (mean 0.68) — a **32-point** deception zone, recomputed from the committed
-> answers by `python3 demo.py`. Any reader can falsify it.
+> **TL;DR.** An auditable LLM evaluation pipeline (10 programmatic `reference_checks` —
+> [listed in `specs/scoring-rules.json`](./specs/scoring-rules.json), implemented in
+> [`copilot/score_copilot_run_v2.py`](./copilot/score_copilot_run_v2.py) — including
+> *cognitive-honesty* dimensions) that catches false-green verdicts.
+> **One dataset, two judges, 100 committed answers** (50 per run: [v3](./outputs/llm-lab/datasets/llm_lab_copilot/runs/20260713-213920-copilot-3b-lora-v3/outputs.jsonl),
+> [v3c](./outputs/llm-lab/datasets/llm_lab_copilot/runs/20260713-211540-copilot-3b-lora-v3c/outputs.jsonl)):
+> the naive checker returns **100/100 green**; the authoritative scorer returns
+> **0.6900** ([v3c/summary.json](./outputs/llm-lab/datasets/llm_lab_copilot/runs/20260713-211540-copilot-3b-lora-v3c/summary.json)) and
+> **0.6700** ([v3/summary.json](./outputs/llm-lab/datasets/llm_lab_copilot/runs/20260713-213920-copilot-3b-lora-v3/summary.json))
+> (mean 0.68) — a **32-point** deception zone, recomputed from those answer files by
+> `python3 demo.py`. Any reader can falsify it.
 > Full story: [docs/blog/001](./outputs/llm-lab/docs/blog/001-auditable-llm-eval-no-green-lights.md).
 > 中文小白指南: [docs/GETTING_STARTED.md](./outputs/llm-lab/docs/GETTING_STARTED.md).
 
