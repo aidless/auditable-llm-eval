@@ -67,6 +67,50 @@ def sha256_file(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def _capability_binding(guard, tools: list[dict], repo: Path) -> dict:
+    """Bind the capability axis (what each tool CAN do) into the trace.
+
+    mcp-guard grew a second, orthogonal axis: the poison scan asks "is the
+    description lying to the model", the capability scan asks "what can this
+    tool actually do" (T0 read .. T3 destructive/exec). A trace that pins only
+    the first axis misses tools like run_cmd that carry no poisoning at all.
+
+    Availability is decided by the CHECKOUT, not by ambient sys.modules: a
+    checkout without guard/capability.py records state=unavailable -- the
+    section is never silently dropped, and an unrelated installed `guard`
+    package never answers for the pinned repo.
+    """
+    if not (repo / "guard" / "capability.py").exists():
+        return {
+            "state": "unavailable",
+            "note": "mcp-guard checkout has no capability axis "
+                    "(guard/capability.py missing); capability tier is not "
+                    "bound in this trace",
+            "per_tool": [],
+            "tier_mismatches": [],
+        }
+    capmod = importlib.import_module("guard.capability")
+    cap = getattr(guard, "scan_capability", None) or capmod.scan_capability
+    mism_fn = getattr(guard, "tier_mismatches", None) or getattr(
+        capmod, "tier_mismatches", None)
+    results = [cap(tool) for tool in tools]
+    mismatches = mism_fn(tools, results) if mism_fn is not None else []
+    per_tool = []
+    for tool, result in zip(tools, results):
+        per_tool.append({
+            "name": result.get("name", tool.get("name", "?")),
+            "tier": result.get("tier"),
+            "unknown": bool(result.get("unknown")),
+            "n_hits": len(result.get("hits", [])),
+            "rules": sorted({h["rule"] for h in result.get("hits", [])}),
+        })
+    return {
+        "state": "present",
+        "per_tool": per_tool,
+        "tier_mismatches": mismatches,
+    }
+
+
 def build_trace(tools_path: Path, run_dir: Path, mcp_guard_repo: Path) -> dict:
     guard = load_guard(mcp_guard_repo)
     # Resolve before anything enters the trace body: a relative `--run-dir` or
@@ -110,6 +154,8 @@ def build_trace(tools_path: Path, run_dir: Path, mcp_guard_repo: Path) -> dict:
             "flagged": flagged,
             "tools": tool_ids,
         },
+        "capability_binding": _capability_binding(
+            guard, tools, Path(mcp_guard_repo).resolve()),
         "tool_binding": tool_binding,
         "tool_usage": tool_usage,
         "run_audit": {
