@@ -3,6 +3,8 @@
 [![checks](https://github.com/aidless/auditable-llm-eval/actions/workflows/checks.yml/badge.svg)](https://github.com/aidless/auditable-llm-eval/actions/workflows/checks.yml)
 [![release-validate](https://github.com/aidless/auditable-llm-eval/actions/workflows/release.yml/badge.svg)](https://github.com/aidless/auditable-llm-eval/actions/workflows/release.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+
+> **English TL;DR**: An auditable LLM evaluation pipeline built around one falsifiable number: on 100 committed answers the naive checker returns 100/100 green while the programmatic authoritative scorer (10 reference checks, including cognitive-honesty dimensions) returns 0.69/0.67 — a 32-point deception gap that `python3 demo.py` recomputes with zero API calls. A QLoRA Qwen2.5-3B training leg supplies real outputs to score, and the repo doubles as the output-audit (AFTER) layer of its Agent Reliability Platform.
 [![Python ≥ 3.10](https://img.shields.io/badge/python-≥3.10-blue.svg)]()
 
 > **TL;DR.** An auditable LLM evaluation pipeline (10 programmatic `reference_checks` —
