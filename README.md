@@ -21,7 +21,7 @@
 > Full story: [docs/blog/001](./outputs/llm-lab/docs/blog/001-auditable-llm-eval-no-green-lights.md).
 > 中文小白指南: [docs/GETTING_STARTED.md](./outputs/llm-lab/docs/GETTING_STARTED.md).
 
-**88 tests** (`pytest tests -q`), **no GPU, no API key, no third-party package.**
+**96 tests** (`pytest tests -q`), **no GPU, no API key, no third-party package.** 37 of them are cross-repo tests that need a sibling `mcp-guard` checkout (see Cross-repo gate below); without it they skip, with it all 96 pass.
 
 ## Install
 
@@ -29,7 +29,7 @@
 git clone https://github.com/aidless/auditable-llm-eval && cd auditable-llm-eval
 python3 -m venv .venv && . .venv/bin/activate
 pip install -e . && pip install pytest
-pytest tests -q          # 88 passed
+pytest tests -q          # 96 passed (37 skip without a sibling mcp-guard checkout)
 python3 demo.py          # 2 runs · 100 answers re-scored · 0 API calls
 ```
 
