@@ -40,7 +40,7 @@ jobs:
         with:
           python-version: "3.12"
 
-      - run: python -m pip install pytest
+      - run: python -m pip install --require-hashes -r requirements.build.lock
 
       - name: Self-evolution tests
         run: python -m pytest tests/test_agent_evolve.py -q
