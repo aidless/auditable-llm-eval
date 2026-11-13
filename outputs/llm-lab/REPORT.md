@@ -172,8 +172,8 @@ The two runs cited in this report are **already committed** (fully reproducible 
 
 ```
 README.md                      # root: TMLR fine-tune project + §10 entry to this subproject
-COPILOT_RETROSPECTIVE.md       # empirical source of truth (score chain to v2, historical)
-COPILOT_NEXT_STEPS.md          # fix roadmap (historical)
+docs/plans/COPILOT_RETROSPECTIVE.md  # empirical source of truth (score chain to v2, historical)
+docs/plans/COPILOT_NEXT_STEPS.md      # fix roadmap (historical)
 verify_copilot_run.py          # discipline verifier (re-runs real scorer from disk)
 eval/
   run_copilot_eval.py          # copilot eval entry point (predict + naive verdict + score + config)

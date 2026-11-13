@@ -145,4 +145,4 @@ python run_all.py --skip-m2 --skip-m3 --papers 20
 # 再逐步放量到 M2（3B）。
 ```
 
-*本速查与 `RUN_GUIDE.md`（运行监控清单）、`M2_CONFIG_REVIEW.md`（超参审计）、技能 `finetune_playbook.md` §8（排错要点）互为补充。最后更新：2026-07-12。*
+*本速查与 `RUN_GUIDE.md`（运行监控清单）、`docs/plans/M2_CONFIG_REVIEW.md`（超参审计）、技能 `finetune_playbook.md` §8（排错要点）互为补充。最后更新：2026-07-12。*

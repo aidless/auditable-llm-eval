@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-score_copilot_run_v2.py — llm-lab-copilot 评分器升级版（对应 NEXT_STEPS_PLAN 的 A1）
+score_copilot_run_v2.py — llm-lab-copilot 评分器升级版（对应 docs/plans/NEXT_STEPS_PLAN.md 的 A1）
 
 实现反思里要求的 10 类 reference_checks + 结构化输出：
     exact_checks / soft_checks / unsupported_claims / missing_required_points / score

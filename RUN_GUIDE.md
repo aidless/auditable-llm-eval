@@ -115,7 +115,7 @@ python train/train_lora.py --model Qwen/Qwen2.5-3B-Instruct \
 | 顺序 | 预期输出 | 说明 |
 |---|---|---|
 | 1 | `[env] CUDA available: True` / GPU 信息 | |
-| 2 | `[warn] 检测到显存 < 6.5GB...` | 默认安全档：batch=2 / seq=2048（详见 `M2_CONFIG_REVIEW.md`） |
+| 2 | `[warn] 检测到显存 < 6.5GB...` | 默认安全档：batch=2 / seq=2048（详见 `docs/plans/M2_CONFIG_REVIEW.md`） |
 | 3 | `[load-start] → [load-end]` | 4bit 加载 3B（约 2GB 权重） |
 | 4 | `[data] 训练 X 条 / 验证 Y 条` | Y = 5% × X（默认 `eval-ratio=0.05`，启用早停） |
 | 5 | 每 10 步 loss 日志；每 50 步 eval_loss | 有验证集才评估 |

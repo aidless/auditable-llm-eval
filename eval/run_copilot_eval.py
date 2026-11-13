@@ -17,6 +17,7 @@ run_copilot_eval.py — copilot 评测统一入口（整合 scorer）
   python eval/run_copilot_eval.py --model copilot-3b-lora-v3:latest --limit 50
 """
 import argparse
+import hashlib
 import json
 import subprocess
 import sys
@@ -57,6 +58,16 @@ def main():
     ap.add_argument("--model", default="copilot-3b-lora-v3c:latest")
     ap.add_argument("--tests", default=str(DATASET))
     ap.add_argument("--run-dir", default=None, help="不传则自动生成 runs/<ts>-<tag>")
+    ap.add_argument("--tool-allowlist", default=None,
+                    help="本次 run 允许 agent 使用的工具定义 JSON（mcp-guard 形状）；"
+                         "传入则把 name + digest 钉成 tool_manifest.json，供 trace 交叉校验")
+    ap.add_argument("--tool-calls", default=None,
+                    help="本次 run 实际发生的工具调用日志（JSONL 或 JSON 数组，"
+                         "每项 {tool, args, ...}）；传入则落成 tool_calls.json，"
+                         "由 trace 校验『实际调用的』是否都在白名单内")
+    ap.add_argument("--store-raw-args", action="store_true",
+                    help="把工具调用的原始参数也写进 tool_calls.json。默认不写："
+                         "只存参数键名 + digest，避免把 token/密钥/聊天内容持久化到 run 目录")
     ap.add_argument("--base-url", default="http://localhost:11434")
     ap.add_argument("--temperature", type=float, default=0.0)
     ap.add_argument("--num-predict", type=int, default=400)
@@ -73,6 +84,9 @@ def main():
     run_id = datetime.now().strftime("%Y%m%d-%H%M%S") + "-" + tag
     run_dir = Path(args.run_dir) if args.run_dir else (RUNS / run_id)
     run_dir.mkdir(parents=True, exist_ok=True)
+
+    write_tool_manifest(run_dir, args.tool_allowlist)
+    write_tool_calls(run_dir, args.tool_calls, store_raw_args=args.store_raw_args)
 
     outputs, verdicts = [], []
     t0 = time.time()
@@ -122,6 +136,120 @@ def main():
               f"(scored {s.get('semantic_scored')}/{s.get('total')}, "
               f"runtime_err {s.get('runtime_errors')})")
         print("by_task:", s.get("by_task"))
+
+
+def write_tool_manifest(run_dir: Path, allowlist_path: str | None):
+    """Pin "which tools this run was allowed to use" as a run-dir evidence file.
+
+    Digests come from mcp-guard when it is importable (the same digest function
+    the BEFORE gate pins), otherwise from a local sha256 over the canonical JSON
+    so the manifest is still reproducible without mcp-guard on the path. When no
+    allowlist is given, no file is written -- an absent manifest means "this run
+    did not declare a tool allowlist", not an empty one.
+    """
+    if not allowlist_path:
+        return
+    src = Path(allowlist_path)
+    data = json.loads(src.read_text(encoding="utf-8"))
+    if isinstance(data, dict):
+        data = data.get("tools", [data])
+    digest_fn = _import_guard_digest()
+    tools = []
+    for tool in data:
+        digest = digest_fn(tool) if digest_fn else hashlib.sha256(
+            json.dumps(tool, sort_keys=True, ensure_ascii=False).encode("utf-8")
+        ).hexdigest()
+        tools.append({"name": tool.get("name", "?"), "digest": digest})
+    manifest = {
+        "source": str(src.resolve()),
+        "n_tools": len(tools),
+        "tools": tools,
+        "digest_algo": "mcp-guard.digest_tool" if digest_fn else "sha256(canonical-json)",
+    }
+    (run_dir / "tool_manifest.json").write_text(
+        json.dumps(manifest, sort_keys=True, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8")
+    print(f"[tool-allowlist] pinned {len(tools)} tool(s) -> {run_dir / 'tool_manifest.json'}")
+
+
+def _import_guard_digest():
+    try:
+        from guard.scan import digest_tool  # type: ignore
+        return digest_tool
+    except Exception:
+        return None
+
+
+def _call_digest(tool: str, cargs: dict) -> str:
+    """Stable digest of ONE observed tool call: identity + canonical arguments.
+
+    Distinct from the definition digest in tool_manifest.json: this pins what was
+    actually invoked (name + args), so the trace can report both "which tool was
+    allowed" and "which tool was called with which arguments".
+    """
+    payload = json.dumps({"tool": tool, "args": cargs or {}},
+                         sort_keys=True, ensure_ascii=False)
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def write_tool_calls(run_dir: Path, calls_path: str | None,
+                     store_raw_args: bool = False):
+    """Pin the OBSERVED tool calls as a run-dir evidence file.
+
+    A call log is an observation, not a declaration -- the runner cannot invent
+    it, so it is fed in from whatever actually observed the calls (an MCP proxy,
+    an agent harness). Accepts JSONL (one {tool, args, ...} per line) or a JSON
+    array. When not given, no file is written: absent means "no call log was
+    supplied for this run", which is the common case and is not an error.
+
+    SECRETS: by default the raw `args` are NOT persisted. A tool call can carry
+    tokens, message bodies, credentials or chat content, and a run dir is meant
+    to be committable evidence -- writing raw args there would leak them into git.
+    We keep the argument *keys* and a `call_digest` computed over the raw args
+    (so binding still works), but not the values. `--store-raw-args` is an
+    explicit local-debug opt-in; the record then carries `args_policy: raw`.
+    """
+    if not calls_path:
+        return
+    src = Path(calls_path)
+    raw = src.read_text(encoding="utf-8")
+    stripped = raw.strip()
+    if src.suffix == ".jsonl" or ("\n" in stripped and not stripped.startswith("[")):
+        calls_in = [json.loads(line) for line in raw.splitlines() if line.strip()]
+    else:
+        calls_in = json.loads(stripped)
+    by_tool: dict[str, list[dict]] = {}
+    for i, call in enumerate(calls_in):
+        tool = call.get("tool") or call.get("name") or "?"
+        cargs = call.get("args")
+        if cargs is None and isinstance(call.get("arguments"), dict):
+            cargs = call["arguments"]
+        entry = {
+            "seq": i,
+            "tool": tool,
+            "arg_keys": sorted(cargs) if isinstance(cargs, dict) else [],
+            "call_digest": _call_digest(tool, cargs),
+        }
+        if store_raw_args:
+            entry["args"] = cargs
+        else:
+            entry["args_redacted"] = True
+        by_tool.setdefault(tool, []).append(entry)
+    record = {
+        "source": str(src.resolve()),
+        "n_calls": len(calls_in),
+        "n_tools_called": len(by_tool),
+        "tools_called": sorted(by_tool),
+        "args_policy": "raw" if store_raw_args else "digest-only",
+        "calls": [e for lst in by_tool.values() for e in lst],
+    }
+    (run_dir / "tool_calls.json").write_text(
+        json.dumps(record, sort_keys=True, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8")
+    print(f"[tool-calls] recorded {len(calls_in)} call(s) over "
+          f"{len(by_tool)} tool(s), args="
+          f"{'raw (--store-raw-args)' if store_raw_args else 'digest-only'} "
+          f"-> {run_dir / 'tool_calls.json'}")
 
 
 if __name__ == "__main__":
