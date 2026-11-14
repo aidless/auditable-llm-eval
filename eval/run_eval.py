@@ -48,7 +48,7 @@ def eval_mc(questions, answers):
 
 
 def gen_open(questions, model_path, max_new_tokens=512):
-    from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
+    from transformers import AutoTokenizer, pipeline
     tok = AutoTokenizer.from_pretrained(model_path)
     pipe = pipeline("text-generation", model=model_path,
                     torch_dtype="auto", device_map="auto")

@@ -19,7 +19,6 @@ import argparse
 import os
 import sys
 import torch
-from datetime import datetime
 
 
 # ---------------- 1. 环境检查 ----------------

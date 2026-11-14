@@ -22,7 +22,6 @@ import argparse
 import json
 import re
 import sys
-from pathlib import Path
 
 # ----------------------------------------------------------------------------
 # 1) 检查实现：每个函数 (spec, output_text) -> (passed: bool, detail: str[, soft])

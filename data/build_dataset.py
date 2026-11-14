@@ -68,7 +68,7 @@ def build_samples(papers: list, seed: int = 42):
         b = ct.TEMPLATES["B"]({
             "problem": f"结合论文《{p['title'][:40]}》的思路，推导 {concept} 关于模型参数的梯度。",
             "steps": ["写出目标函数 J(θ)",
-                      f"对 θ 求偏导 ∂J/∂θ",
+                      "对 θ 求偏导 ∂J/∂θ",
                       "代入本文设定化简"],
             "conclusion": f"梯度形式表明 {concept} 如何影响更新方向。",
         })

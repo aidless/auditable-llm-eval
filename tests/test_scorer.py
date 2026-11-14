@@ -40,8 +40,6 @@ from copilot.score_copilot_run_v2 import (  # noqa: E402
     score_one,
     selftest,
     DISPATCH,
-    OVERCLAIM_PATTERNS,
-    RUNTIME_PATTERNS,
 )
 
 
