@@ -1,0 +1,129 @@
+{
+ "total": 20,
+ "passed": 20,
+ "failed": 0,
+ "selftest": false,
+ "failed_by_axis": {},
+ "results": [
+  {
+   "id": "AE-01",
+   "axis": "scorer/exact",
+   "ok": true,
+   "detail": "True"
+  },
+  {
+   "id": "AE-02",
+   "axis": "scorer/exact",
+   "ok": true,
+   "detail": "False"
+  },
+  {
+   "id": "AE-03",
+   "axis": "scorer/exact",
+   "ok": true,
+   "detail": "True"
+  },
+  {
+   "id": "AE-04",
+   "axis": "scorer/overclaim",
+   "ok": true,
+   "detail": "1"
+  },
+  {
+   "id": "AE-05",
+   "axis": "scorer/overclaim",
+   "ok": true,
+   "detail": "0"
+  },
+  {
+   "id": "AE-06",
+   "axis": "scorer/overclaim",
+   "ok": true,
+   "detail": "2"
+  },
+  {
+   "id": "AE-07",
+   "axis": "scorer/runtime",
+   "ok": true,
+   "detail": "True"
+  },
+  {
+   "id": "AE-08",
+   "axis": "scorer/runtime",
+   "ok": true,
+   "detail": "False"
+  },
+  {
+   "id": "AE-09",
+   "axis": "scorer/runtime",
+   "ok": true,
+   "detail": "True"
+  },
+  {
+   "id": "AE-10",
+   "axis": "scorer/dispatch",
+   "ok": true,
+   "detail": "10"
+  },
+  {
+   "id": "AE-11",
+   "axis": "scorer/dispatch",
+   "ok": true,
+   "detail": "raised FileNotFoundError"
+  },
+  {
+   "id": "AE-12",
+   "axis": "results/recompute",
+   "ok": true,
+   "detail": "50"
+  },
+  {
+   "id": "AE-13",
+   "axis": "results/recompute",
+   "ok": true,
+   "detail": "0.67"
+  },
+  {
+   "id": "AE-14",
+   "axis": "results/recompute",
+   "ok": true,
+   "detail": "3"
+  },
+  {
+   "id": "AE-15",
+   "axis": "dataset/shape",
+   "ok": true,
+   "detail": "50"
+  },
+  {
+   "id": "AE-16",
+   "axis": "dataset/shape",
+   "ok": true,
+   "detail": "150"
+  },
+  {
+   "id": "AE-17",
+   "axis": "trace/replay",
+   "ok": true,
+   "detail": "f889747d8cbe435e"
+  },
+  {
+   "id": "AE-18",
+   "axis": "trace/replay",
+   "ok": true,
+   "detail": "True"
+  },
+  {
+   "id": "AE-19",
+   "axis": "runner/mc",
+   "ok": true,
+   "detail": "0.5"
+  },
+  {
+   "id": "AE-20",
+   "axis": "docs/recompute-entry",
+   "ok": true,
+   "detail": "eval/run_cases.py"
+  }
+ ]
+}

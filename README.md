@@ -77,10 +77,45 @@ the single number this repository exists to make falsifiable (see TL;DR above).
 | 32 点欺骗区间 | `100% − (0.67+0.69)/2 = 32%`，由 demo 输出 `deception gap` 行直接给出 | `python3 demo.py` |
 | 10 个 reference_checks | `specs/scoring-rules.json` 的 `checks` 数组长度 | `python3 -c "import json;print(len(json.load(open('specs/scoring-rules.json'))['checks']))"` |
 | 3 个 global_detectors | `specs/scoring-rules.json` 的 `global_detectors` 数组长度 | 同上（`['global_detectors']`） |
+| 20/20 题通过、`--selftest` 19/20 变红 | `eval/cases.jsonl`（20 题）+ `eval/run-report.json` | `python3 eval/run_cases.py` ／ `python3 eval/run_cases.py --selftest` |
+| 0.67 / 0.69 逐题复算 | `runs/<v3|v3c>/report.jsonl` 里 `score` 的均值（仅 `runtime_error=false` 且 `score!=null` 的题） | `python3 eval/run_cases.py`——AE-13 这条题就是这条复算，期望值 0.67 是现算的 |
+| 归因条数（10/10、7/30…） | `runs/<v3|v3c>/report.jsonl` 的 `exact_checks[*].passed == false` 按 (task, check) 计数 | 见下方「失败归因」段列出的算式 |
 
 **验证脚本入口**：`scripts/validate_release.py`（CI 的 `release.yml` 在每次 push 时跑：① `--selftest` ② `unittest discover` ③ 集成复算）。
 
 > 数字一致性由 `tests/test_demo.py` 守护：它断言 demo 输出中的 0.67 / 0.69 与 `match=True`，即**标题数字是从回答文件重算出来的，不是硬编码**。
+
+## 失败归因（按 axis + 按 check 类型）
+
+**验收判据**：`python3 eval/run_cases.py` 必须 **20/20** 通过（exit 0）；`python3 eval/run_cases.py --selftest` 必须 **19/20**（exit 0——第一条期望值被篡改后必须变红，若仍全绿则这套题是装饰）。任何一条低于阈值即视为回归。
+
+题库 `eval/cases.jsonl` 20 题，9 个 axis：`scorer/exact` 3、`scorer/overclaim` 3、`scorer/runtime` 3、`results/recompute` 3、`scorer/dispatch` 2、`dataset/shape` 2、`trace/replay` 2、`runner/mc` 1、`docs/recompute-entry` 1。其中 19 条是 `expr`/`raises`（真调 `copilot.score_copilot_run_v2`、`agent_platform.trace`、`eval.run_eval` 或真解析 `outputs/…/runs/*/report.jsonl`），1 条 `doc`。
+
+**这套题自己怎么报失败**（不是只报 pass_rate）：
+
+```
+$ python3 eval/run_cases.py --save
+...
+19/20 cases passed
+失败归因（按 axis）：
+  docs/recompute-entry: 1 条 —— AE-20
+```
+
+`--save` 把 `total/passed/failed/failed_by_axis/results[]` 落到 `eval/run-report.json`，每条失败都带 `detail`（实际值 vs 期望值）。
+
+**模型输出侧的失败归因**：两个已提交 run 的 `report.jsonl` 逐题记了哪条 `reference_check` 判失，按 (task, check 类型) 汇总后的真实读数：
+
+| run | task（by_task 均值） | 判失的 check | 条数 | 归属 |
+|---|---|---|---|---|
+| v3 | `report_summary` 0.3333 | `must_mention_rerun_or_reproducibility` | 10/10 | 生成侧——`detail` 全为 `命中: []`，送模型的 prompt 与回答里没有 rerun/复现字样 |
+| v3 | `report_summary` 0.3333 | `must_recommend_manual_or_semantic_eval` | 10/10 | 生成侧——未建议人工/语义复核 |
+| v3 | `reviewer_qa` 0.65 | `must_not_judge_semantic_quality` | 7/30 | 判分侧 `copilot/score_copilot_run_v2.py:117` 正常工作，检出了越界断言 |
+| v3 | `eval_yaml` 0.7 | `must_include_all_keywords` | 2/10 | 生成侧——缺必需关键词 |
+| v3c | `report_summary` 0.3333 | 同 v3 那两条 | 10/10 + 10/10 | 生成侧（两次配置都没改这条腿） |
+| v3c | `reviewer_qa` 0.85 | `must_not_judge_semantic_quality` | 3/30 | 判分侧（同 v3） |
+| v3c | `eval_yaml` 0.6 | `must_include_all_keywords` | 7/10 | 生成侧——v3c 在 eval_yaml 上反而退步 5 条 |
+
+读法：`report_summary` 是两次 run 共同的最差 axis（0.3333），原因是它 10 条题要求的两个 check 全部 `命中: []`——**坏在生成侧（prompt/模型输出），不是评分器**；`reviewer_qa` 的失分则相反，是评分器正确拦住了越界断言，属预期行为。`by_task` 均值与 `summary.json` 里的 `by_task` 逐键一致，可复算。
 
 ## What this repo is really about
 

@@ -2,7 +2,9 @@
 # 证据来源: checks.yml
 # 命令逐字取自该来源，未增删任何参数。
 # 归一: python → python3（本机无 python 别名，实测 Error 127）
+# 追加: eval 题库验收（eval/run_cases.py，20 题，见 README「失败归因」段）
 .PHONY: eval
 
 eval:
 	python3 -m pytest tests -q
+	python3 eval/run_cases.py
